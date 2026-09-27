@@ -322,25 +322,38 @@ function grafCombinado(){
   JAV.filter(x=>x.comprado===1&&x.fac&&+x.fac.slice(0,4)===ANIO).forEach(x=>ventas[+x.fac.slice(5,7)-1]++);
   const tCm=base.map((b,i)=>b?Math.round(ventas[i]/b*100):null);
   const tAc=base.map((b,i)=>b?Math.round(conAcc[i]/b*100):null);
+  /* La barra es la entrega total del mes (Venta Tradicional + Planes de Ahorro +
+     V. Corporativa), partida en dos: la parte con contrato vendido y el resto.
+     Las dos juntas suman la altura de la barra. */
+  const conCm=base.map((b,i)=>Math.min(ventas[i],b));
+  const sinCm=base.map((b,i)=>Math.max(b-ventas[i],0));
   return chart({
-    grid:{left:6,right:6,top:20,bottom:36,containLabel:true},
+    grid:{left:6,right:6,top:20,bottom:54,containLabel:true},
     textStyle:{fontFamily:"var(--body)",color:c.mute},
     tooltip:{trigger:"axis",backgroundColor:c.fondo,borderColor:c.line,textStyle:{color:c.txt},
-      formatter:p=>p[0].name+"<br>"+p.map(x=>`${x.marker}${x.seriesName}: <b>${x.value===null?"—":(x.seriesType==="line"?x.value+"%":x.value)}</b>`).join("<br>")},
+      formatter:p=>{
+        const i=p[0].dataIndex;
+        let t=p[0].name+" · <b>"+base[i]+"</b> entregas<br>";
+        return t+p.map(x=>`${x.marker}${x.seriesName}: <b>${x.value===null?"—":(x.seriesType==="line"?x.value+"%":x.value)}</b>`).join("<br>");
+      }},
     legend:{bottom:0,icon:"roundRect",itemWidth:11,itemHeight:11,textStyle:{fontSize:12,color:c.mute},
+      selectedMode:"multiple",
       selected:{"Tasa contratos":true,"Tasa accesorios":true}},
     xAxis:{type:"category",data:MESES.map(m=>m.slice(0,3)),axisLine:{lineStyle:{color:c.line}},axisTick:{show:false},axisLabel:{color:c.mute,fontSize:11}},
     yAxis:[{type:"value",splitLine:{lineStyle:{color:c.split}},axisLabel:{color:c.mute,fontSize:11}},
            {type:"value",max:100,splitLine:{show:false},axisLabel:{color:c.mute,fontSize:11,formatter:v=>v+"%"}}],
     series:[
-      {name:"Contratos vendidos",type:"bar",data:ventas,barMaxWidth:26,itemStyle:{color:c.vw,borderRadius:[4,4,0,0]}},
+      {name:"Con contrato",type:"bar",stack:"ent",data:conCm,barMaxWidth:30,
+        itemStyle:{color:c.vw}},
+      {name:"Sin contrato",type:"bar",stack:"ent",data:sinCm,barMaxWidth:30,
+        itemStyle:{color:oscuro()?"#2c4670":"#c9d8f0",borderRadius:[4,4,0,0]}},
       {name:"Tasa contratos",type:"line",yAxisIndex:1,data:tCm,smooth:true,symbolSize:7,connectNulls:true,
         lineStyle:{width:3,color:c.acc},itemStyle:{color:c.acc},
-        markLine:{silent:true,symbol:"none",data:[{yAxis:30,label:{formatter:"Meta 30%",fontSize:11,color:"#c23b3b"},lineStyle:{type:"dashed",color:"#c23b3b"}}]}},
+        markLine:{silent:true,symbol:"none",data:[{yAxis:30,label:{formatter:"Meta 30%",position:"insideEndTop",fontSize:11,color:"#c23b3b"},lineStyle:{type:"dashed",color:"#c23b3b"}}]}},
       {name:"Tasa accesorios",type:"line",yAxisIndex:1,data:tAc,smooth:true,symbolSize:7,connectNulls:true,
         lineStyle:{width:3,color:"#1f8a5b"},itemStyle:{color:"#1f8a5b"}}
     ]
-  },300);
+  },330);
 }
 
 /* Racha: los días del mes en que vendiste algo */
