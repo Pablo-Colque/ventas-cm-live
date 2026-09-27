@@ -167,7 +167,7 @@ const fdia=d=>d?d.split("-").reverse().join("/"):"—";
 const HOY=new Date(); HOY.setHours(0,0,0,0);
 const dDesde=d=>d?Math.floor((HOY-new Date(d+"T00:00:00"))/864e5):null;
 
-let JAV=[],ACP=[],ACC=[],ACV=[],ENT=[],MES,ANIO;
+let JAV=[],ACP=[],ACC=[],ACV=[],CMV=[],ENT=[],MES,ANIO;
 let ACC_POR_VIN={}, OR_DE_ENTREGA={}, ENTREGA_POR_VIN={};
 const CANAL_BASE=["VENTA TRADICIONAL","PLANES DE AHORRO","V. CORPORATIVA"];
 const enMes=d=>d&&+d.slice(0,4)===ANIO&&+d.slice(5,7)===MES;
@@ -175,6 +175,10 @@ const enMes=d=>d&&+d.slice(0,4)===ANIO&&+d.slice(5,7)===MES;
 function preparar(){
   JAV=(DATA.javier||[]).map(r=>({ent:r[0],fac:r[1],comprado:r[2],precio:r[3],motivo:(r[4]||"").trim(),mom:r[5],vin:r[6],mod:r[7]||"Sin dato"}));
   ACP=(DATA.accPesos||[]).map(r=>({f:r[0],t:r[1],or:r[2]||"",vin:r[3]||""}));
+  /* Contratos vendidos de todo el año, por fecha de factura. La planilla de Javier
+     arranca en mayo 2026; los meses anteriores salen de la columna F. VENTA CM de
+     la hoja de entregas. El Apps Script ya los une en una sola serie. */
+  CMV=(DATA.cmv||[]).map(r=>({f:r[0],mom:r[1]}));
   /* Todas las OR de accesorios, las abra quien las abra: sirven para descartar
      al cliente que ya volvió y compró. */
   ACV=(DATA.accVin||[]).map(r=>({f:r[0],vin:r[1],or:r[2]||""}));
@@ -319,7 +323,8 @@ function grafCombinado(){
   const ventas=new Array(12).fill(0), base=new Array(12).fill(0), conAcc=new Array(12).fill(0);
   ENT.forEach(r=>{ if(+r.f.slice(0,4)!==ANIO)return; const m=+r.f.slice(5,7)-1;
     if(CANAL_BASE.includes(r.canal)){base[m]++; } if(r.acc)conAcc[m]++; });
-  JAV.filter(x=>x.comprado===1&&x.fac&&+x.fac.slice(0,4)===ANIO).forEach(x=>ventas[+x.fac.slice(5,7)-1]++);
+  if(CMV.length) CMV.filter(x=>x.f&&+String(x.f).slice(0,4)===ANIO).forEach(x=>ventas[+x.f.slice(5,7)-1]++);
+  else JAV.filter(x=>x.comprado===1&&x.fac&&+x.fac.slice(0,4)===ANIO).forEach(x=>ventas[+x.fac.slice(5,7)-1]++);
   const tCm=base.map((b,i)=>b?Math.round(ventas[i]/b*100):null);
   const tAc=base.map((b,i)=>b?Math.round(conAcc[i]/b*100):null);
   /* La barra es la entrega total del mes (Venta Tradicional + Planes de Ahorro +
