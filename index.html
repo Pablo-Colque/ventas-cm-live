@@ -62,6 +62,10 @@ td{border-bottom:1px solid var(--line);padding:9px 8px}
 .p-b{background:rgba(194,59,59,.14);color:var(--bad)}.p-n{background:rgba(123,138,160,.14);color:var(--ink2)}
 .tw{overflow:auto;max-height:70vh}
 .vacio{color:var(--mute);font-size:14px;padding:10px 0}
+.fila.click{cursor:pointer;transition:background .12s,box-shadow .12s}
+.fila.click:hover{box-shadow:inset 0 0 0 1px var(--acc)}
+.fila.sel{box-shadow:inset 0 0 0 2px var(--acc)}
+.fila.sel small{color:var(--acc)}
 .rk div{display:flex;justify-content:space-between;border-bottom:1px dotted var(--line);padding:6px 0}
 .rk em{font-style:normal;color:var(--mute);width:24px;display:inline-block}
 footer{color:var(--mute);font-size:12px;text-align:center;margin-top:20px}
@@ -169,11 +173,16 @@ const dDesde=d=>d?Math.floor((HOY-new Date(d+"T00:00:00"))/864e5):null;
 
 let JAV=[],ACP=[],ACC=[],ACV=[],CMV=[],ENT=[],MES,ANIO;
 let ACC_POR_VIN={}, OR_DE_ENTREGA={}, ENTREGA_POR_VIN={};
+let CM_POR_VIN={}, SERV_POR_VIN={}, MOTIVO_POR_VIN={};
+let vistaCm="", vistaAcc="";   /* filtro activo al tocar un recuadro */
 const CANAL_BASE=["VENTA TRADICIONAL","PLANES DE AHORRO","V. CORPORATIVA"];
 const enMes=d=>d&&+d.slice(0,4)===ANIO&&+d.slice(5,7)===MES;
 
 function preparar(){
   JAV=(DATA.javier||[]).map(r=>({ent:r[0],fac:r[1],comprado:r[2],precio:r[3],motivo:(r[4]||"").trim(),mom:r[5],vin:r[6],mod:r[7]||"Sin dato"}));
+  /* Lo que dijo el cliente, para las entregas que Javier ya cargó en su planilla */
+  MOTIVO_POR_VIN={};
+  JAV.forEach(x=>{ if(x.vin&&x.motivo)MOTIVO_POR_VIN[String(x.vin).slice(-8)]=x.motivo });
   ACP=(DATA.accPesos||[]).map(r=>({f:r[0],t:r[1],or:r[2]||"",vin:r[3]||""}));
   /* Contratos vendidos de todo el año, por fecha de factura. La planilla de Javier
      arranca en mayo 2026; los meses anteriores salen de la columna F. VENTA CM de
@@ -182,6 +191,18 @@ function preparar(){
   /* Todas las OR de accesorios, las abra quien las abra: sirven para descartar
      al cliente que ya volvió y compró. */
   ACV=(DATA.accVin||[]).map(r=>({f:r[0],vin:r[1],or:r[2]||""}));
+
+  /* Contratos de mantenimiento ya vendidos, de todas las planillas y todos los
+     vendedores. Si el VIN está acá, el cliente ya tiene contrato. */
+  CM_POR_VIN={};
+  (DATA.cmVin||[]).forEach(r=>{
+    const d={cubre:r[1]||"",f:r[2]||null};
+    if(r[0])CM_POR_VIN[r[0]]=d;
+    if(r[3])CM_POR_VIN[r[3]]=d;        /* también por dominio */
+  });
+  /* Services hechos: hasta qué kilometraje llegó y si lo pagó o se lo cubrieron */
+  SERV_POR_VIN={};
+  (DATA.servVin||[]).forEach(r=>{ SERV_POR_VIN[r[0]]={km:+r[1]||0,pago:!!r[2],cub:!!r[3],f:r[4]||null} });
   ACC=(DATA.acc||[]).map(r=>({f:r[0],items:(r[1]||[]).map(tit)}));
   /* Lo que manda el Apps Script en ent:
      0 fecha · 1 canal · 2 familia · 3 vendedor · 4 C.M. · 5 accesorios 0/1
@@ -237,12 +258,65 @@ function prioridadAcc(d){
 }
 const ordenP=x=>({[P_ULT]:0,[P_AHORA]:1,[P_SEM]:2,[P_LUEGO]:3})[prioridad(x)];
 const pendientes=()=>JAV.filter(x=>x.comprado===0&&(dDesde(x.ent)||0)<=VENTANA_FIN&&!DESCARTE.test(x.motivo||""));
+/* ═══ OPORTUNIDADES DE CONTRATO ═══
+   Salen de la hoja de entregas, que tiene todo el historial. La planilla de Javier
+   aporta el motivo de no compra. Las planillas de CM dicen quién ya tiene contrato.
+
+   Camioneta: 10.000 el 1ro · 20.000 el 2do · 30.000 el 3ro
+   Auto:      15.000 el 1ro · 30.000 el 2do · 45.000 el 3ro
+   30.000 es ambiguo, por eso se mira el modelo. */
+const esCamioneta=m=>/amarok|saveiro/i.test(String(m||""));
+function nroServicio(km,mod){
+  if(!km)return 0;
+  if(esCamioneta(mod)) return km>=30000?3:km>=20000?2:km>=10000?1:0;
+  return km>=45000?3:km>=30000?2:km>=15000?1:0;
+}
+/* Estado de cada entrega frente al contrato */
+function estadoCm(r){
+  const d=dDesde(r.f)||0;
+  if(d<0) return null;                                  /* entrega programada, todavía no salió */
+  if(d>VENTANA_FIN) return null;                        /* se le pasó el año */
+  if(r.cm) return null;                                 /* salió con contrato desde la entrega */
+  if(r.vin&&CM_POR_VIN[r.vin]) return null;             /* ya lo compró, acá o en otro lado */
+  const sv=r.vin?SERV_POR_VIN[r.vin]:null;
+  if(sv&&sv.cub&&!sv.pago) return null;                 /* el service se lo cubrieron: tiene contrato */
+  const motivo=r.vin?(MOTIVO_POR_VIN[r.vin]||""):"";
+  if(DESCARTE.test(motivo)) return null;                /* el cliente cerró la puerta */
+  const n=sv?nroServicio(sv.km,r.mod):0;
+  return {
+    d:d, restan:restan(d), motivo:motivo,
+    vino:!!(sv&&sv.pago), servHecho:n, ultimoServ:sv?sv.f:null,
+    /* Lo que todavía le puede cubrir el contrato */
+    cubre: n>=3?0 : n===2?1 : 2
+  };
+}
+function prioridadCm(e){
+  if(e.d>=VENTANA_ULTIMO) return P_ULT;                 /* se le termina el año */
+  if(e.vino) return P_AHORA;                            /* vino al service y lo pagó: no tiene contrato */
+  if(/recordatorio|cierre de tarjeta|proximo mes|margen tarjeta/i.test(e.motivo))
+    return faltaCierre<=7?P_AHORA:P_SEM;
+  if(e.d>=45) return P_SEM;
+  return P_LUEGO;
+}
+const ordenCm=x=>({[P_ULT]:0,[P_AHORA]:1,[P_SEM]:2,[P_LUEGO]:3})[prioridadCm(x.e)];
+/* La lista completa, ordenada por lo que se vence primero */
+function oportCm(){
+  const out=[];
+  ENT.forEach(r=>{
+    if(!CANAL_BASE.includes(r.canal))return;
+    const e=estadoCm(r);
+    if(!e)return;
+    out.push({...r,e:e});
+  });
+  return out.sort((a,b)=>ordenCm(a)-ordenCm(b)||a.e.restan-b.e.restan);
+}
+
 /* Ya compró accesorios después de la entrega: no se lo vuelve a llamar.
    No importa quién abrió la OR — Mauro, Tatiana, Guantay, Pablo o Javier. */
 const yaVolvio=r=>!!(r.vin&&(ACC_POR_VIN[r.vin]||[]).some(x=>x.f>=r.f));
 /* Entregas sin accesorios, todavía dentro de la ventana y que no volvieron */
 const oportAcc=()=>ENT.filter(r=>CANAL_BASE.includes(r.canal)&&!r.acc&&
-    (dDesde(r.f)||0)<=VENTANA_FIN&&!yaVolvio(r))
+    (dDesde(r.f)||0)>=0&&(dDesde(r.f)||0)<=VENTANA_FIN&&!yaVolvio(r))
   .map(r=>({...r,d:dDesde(r.f)||0})).sort((a,b)=>
     ({[P_ULT]:0,[P_AHORA]:1,[P_SEM]:2,[P_LUEGO]:3})[prioridadAcc(a.d)]-
     ({[P_ULT]:0,[P_AHORA]:1,[P_SEM]:2,[P_LUEGO]:3})[prioridadAcc(b.d)]||a.d-b.d);
@@ -410,9 +484,8 @@ function vHoy(){
   const colPA=objAcc&&pAcc>=objAcc?"var(--ok)":"var(--bad)";
   const orFaltan=tickAcc?Math.ceil(faltanAcc/tickAcc):0;
 
-  const pend=pendientes();
-  const urgentes=pend.filter(x=>[P_ULT,P_AHORA].includes(prioridad(x)))
-    .sort((a,b)=>ordenP(a)-ordenP(b)||(dDesde(b.ent)||0)-(dDesde(a.ent)||0));
+  const pend=oportCm();
+  const urgentes=pend.filter(x=>[P_ULT,P_AHORA].includes(prioridadCm(x.e)));
   const accUrg=oportAcc().filter(x=>[P_ULT,P_AHORA].includes(prioridadAcc(x.d)));
 
   return `
@@ -448,8 +521,8 @@ function vHoy(){
   </div>
 
   ${urgentes.length?`<div class="card" style="border-left:4px solid var(--ok)">
-    <h2>📞 Contratos: empezá por estos <span>${urgentes.length} de ${pend.length} pendientes</span></h2>
-    <p style="font-size:13px;color:var(--ink2);margin-bottom:8px">🔥 son los que están por cumplir el año — después ya no se puede ofrecer. Próximo cierre de tarjeta: ${fdia(CIERRE.toISOString().slice(0,10))}.</p>
+    <h2>📞 Contratos: empezá por estos <span>${urgentes.length} de ${pend.length} oportunidades</span></h2>
+    <p style="font-size:13px;color:var(--ink2);margin-bottom:8px">🔥 son los que están por cumplir el año. El 🔧 ya volvió al service y lo pagó: ese no tiene contrato. Próximo cierre de tarjeta: ${fdia(CIERRE.toISOString().slice(0,10))}.</p>
     ${tabla(urgentes.slice(0,8))}
     <p style="margin-top:8px;font-size:13px;color:var(--mute)">La lista completa está en la pestaña Contratos.</p>
   </div>`:`<div class="card"><h2>📞 Contratos</h2><div class="vacio">Nada urgente por ahora.</div></div>`}
@@ -465,14 +538,27 @@ function vHoy(){
   <div class="card"><h2>Cómo venís en el año <span>tocá la leyenda para prender o apagar cada línea</span></h2>${grafCombinado()}</div>`;
 }
 
+/* Qué hay que hacer con cada uno, en una frase */
+function queHacer(e){
+  if(e.vino){
+    const n=e.servHecho;
+    if(e.cubre===0) return "Ya hizo los tres services · no queda nada por cubrir";
+    return `Pagó el service ${n===1?"de los 10/15.000":n===2?"2do":"3ro"} · le quedan ${e.cubre} por cubrir`;
+  }
+  if(e.motivo) return tit(e.motivo);
+  if(e.d>=VENTANA_ULTIMO) return "Verificar en el sistema de VW antes de llamar";
+  return "Sin contacto registrado";
+}
 function tabla(arr){
-  if(!arr.length)return '<div class="vacio">Sin clientes pendientes.</div>';
-  return `<div class="tw"><table><tr><th></th><th>Entregada</th><th class="r">Le quedan</th><th>VIN</th><th>Modelo</th><th>Qué dijo</th></tr>
-  ${arr.map(x=>{const p=prioridad(x), d=dDesde(x.ent)||0, q=restan(d);
+  if(!arr.length)return '<div class="vacio">Nada para llamar con este filtro.</div>';
+  return `<div class="tw"><table><tr><th></th><th>Entregada</th><th class="r">Le quedan</th><th>Interno</th><th>Modelo y qué hacer</th></tr>
+  ${arr.map(x=>{const e=x.e, p=prioridadCm(e), q=e.restan;
     return `<tr><td>${chip(p)}</td>
-    <td>${fdia(x.ent)}<small style="display:block;color:var(--mute);font-size:11px">${d} días</small></td>
+    <td>${fdia(x.f)}<small style="display:block;color:var(--mute);font-size:11px">${e.d} días</small></td>
     <td class="r"><span class="pill ${q<=65?"p-b":q<=180?"p-w":"p-n"}">${q} d</span></td>
-    <td>${esc(x.vin)}</td><td>${esc(x.mod)}</td><td>${esc(tit(x.motivo))}</td></tr>`}).join("")}</table></div>`;
+    <td>${esc(x.int||x.vin||"—")}</td>
+    <td>${esc(x.mod)}<small style="display:block;color:var(--mute);font-size:11px">${e.vino?"🔧 ":""}${esc(queHacer(e))}</small></td>
+    </tr>`}).join("")}</table></div>`;
 }
 function tablaAcc(arr){
   if(!arr.length)return '<div class="vacio">Todas las entregas salieron con accesorios 👏</div>';
@@ -486,22 +572,31 @@ function tablaAcc(arr){
 
 function vContratos(){
   const vendidos=JAV.filter(x=>x.comprado===1&&enMes(x.fac));
-  const pend=[...pendientes()].sort((a,b)=>ordenP(a)-ordenP(b)||String(b.ent).localeCompare(String(a.ent)));
   const enEnt=vendidos.filter(x=>x.mom==="En la entrega").length;
   const recup=vendidos.length-enEnt;
-  const cuenta=p=>pend.filter(x=>prioridad(x)===p).length;
+
+  const todas=oportCm();
+  const cuenta=p=>todas.filter(x=>prioridadCm(x.e)===p).length;
+  const vinieron=todas.filter(x=>x.e.vino).length;
+  const lista=vistaCm?todas.filter(x=>prioridadCm(x.e)===vistaCm):todas;
+  const sel=p=>vistaCm===p?" sel":"";
+
   return `
   <div class="card"><h2>Vendidos en ${MESES[MES-1].toLowerCase()}</h2>
     <div class="fila"><span>Contratos<small>${enEnt} en la entrega · ${recup} post entrega</small></span><b>${vendidos.length}</b><span></span></div>
     <div class="fila"><span>Recuperados post entrega<small>los que se cerraron llamando</small></span><b style="color:var(--ok)">${recup}</b><span></span></div>
     <div class="fila"><span>Facturado</span><b>${pesos(vendidos.reduce((s,x)=>s+x.precio,0))}</b><span></span></div>
   </div>
-  <div class="card"><h2>Oportunidades de contrato <span>${pend.length} clientes</span></h2>
-    <div class="fila"><span>🔥 Último llamado<small>les queda menos de 2 meses de ventana</small></span><b style="color:var(--bad)">${cuenta(P_ULT)}</b><span></span></div>
-    <div class="fila"><span>📞 Llamar ahora<small>cierre de tarjeta el ${fdia(CIERRE.toISOString().slice(0,10))}</small></span><b style="color:var(--ok)">${cuenta(P_AHORA)}</b><span></span></div>
-    <div class="fila"><span>Esta semana</span><b style="color:var(--warn)">${cuenta(P_SEM)}</b><span></span></div>
-    <p style="font-size:13px;color:var(--ink2);margin:12px 0 10px">Ninguno dijo que no: pidieron recordatorio, esperan el cierre de tarjeta o dijeron "en otro momento". Buscá el cliente por el VIN en tu planilla.</p>
-    ${tabla(pend)}
+
+  <div class="card"><h2>Oportunidades de contrato <span>${todas.length} unidades dentro del año</span></h2>
+    <p style="font-size:13px;color:var(--ink2);margin-bottom:10px">Tocá un recuadro para ver solo esos. Ya salieron de la lista los que compraron contrato —acá o en otro lado— y los que dijeron que no.${vinieron?` <b>${vinieron} volvieron al service y lo pagaron</b>: esos seguro no tienen contrato, van marcados con 🔧.`:""}</p>
+    <div class="fila click${sel(P_ULT)}" onclick="filtrarCm('${P_ULT}')"><span>🔥 Último llamado<small>les queda menos de 2 meses de ventana</small></span><b style="color:var(--bad)">${cuenta(P_ULT)}</b><span></span></div>
+    <div class="fila click${sel(P_AHORA)}" onclick="filtrarCm('${P_AHORA}')"><span>📞 Llamar ahora<small>cierre de tarjeta el ${fdia(CIERRE.toISOString().slice(0,10))}</small></span><b style="color:var(--ok)">${cuenta(P_AHORA)}</b><span></span></div>
+    <div class="fila click${sel(P_SEM)}" onclick="filtrarCm('${P_SEM}')"><span>Esta semana</span><b style="color:var(--warn)">${cuenta(P_SEM)}</b><span></span></div>
+    <div class="fila click${sel(P_LUEGO)}" onclick="filtrarCm('${P_LUEGO}')"><span>Más adelante<small>recién entregados, todavía no es momento</small></span><b style="color:var(--mute)">${cuenta(P_LUEGO)}</b><span></span></div>
+    ${vistaCm?`<p style="margin:10px 0 0;font-size:13px"><a href="#" onclick="filtrarCm('');return false" style="color:var(--acc)">← ver la lista completa</a></p>`:""}
+    ${tabla(lista.slice(0,400))}
+    ${lista.length>400?`<p style="margin-top:8px;font-size:13px;color:var(--mute)">Se muestran los primeros 400 de ${lista.length}.</p>`:""}
   </div>
   <div class="card"><h2>Qué modelo compra contrato <span>${ANIO}</span></h2>
     ${barraMod(rankModelos(ANIO).slice().sort((a,b)=>b.pCm-a.pCm),"cm","pCm","Modelos con 3 o más entregas en el año. Verde: arriba del 40%.")}
@@ -516,6 +611,7 @@ function vAccesorios(){
   const c=C();
   const op=oportAcc();
   const cAcc=p=>op.filter(x=>prioridadAcc(x.d)===p).length;
+  const listaAcc=vistaAcc?op.filter(x=>prioridadAcc(x.d)===vistaAcc):op;
   const serie=new Array(12).fill(null);
   ACP.forEach(x=>{if(+x.f.slice(0,4)===ANIO){const m=+x.f.slice(5,7)-1;serie[m]=(serie[m]||0)+x.t}});
   return `
@@ -545,11 +641,13 @@ function vAccesorios(){
     ${barraMod(rankModelos(ANIO).slice().sort((a,b)=>b.pAcc-a.pAcc),"acc","pAcc","Modelos con 3 o más entregas en el año. Verde: arriba del 40%.")}
   </div>
   <div class="card"><h2>Oportunidades de accesorios <span>${op.length} entregas sin accesorios</span></h2>
-    <div class="fila"><span>🔥 Último llamado<small>les queda menos de 2 meses de ventana</small></span><b style="color:var(--bad)">${cAcc(P_ULT)}</b><span></span></div>
-    <div class="fila"><span>📞 Llamar ahora<small>recién entregados o cierre de tarjeta cerca</small></span><b style="color:var(--ok)">${cAcc(P_AHORA)}</b><span></span></div>
-    <div class="fila"><span>Esta semana</span><b style="color:var(--warn)">${cAcc(P_SEM)}</b><span></span></div>
-    <p style="font-size:13px;color:var(--ink2);margin:12px 0 10px">Entregas que salieron sin ningún accesorio y todavía están dentro del año. Buscá el cliente por el interno o el N° de OR en tu planilla.</p>
-    ${tablaAcc(op)}
+    <p style="font-size:13px;color:var(--ink2);margin-bottom:10px">Tocá un recuadro para ver solo esos. Entregas que salieron sin ningún accesorio y todavía están dentro del año.</p>
+    <div class="fila click${vistaAcc===P_ULT?" sel":""}" onclick="filtrarAcc('${P_ULT}')"><span>🔥 Último llamado<small>les queda menos de 2 meses de ventana</small></span><b style="color:var(--bad)">${cAcc(P_ULT)}</b><span></span></div>
+    <div class="fila click${vistaAcc===P_AHORA?" sel":""}" onclick="filtrarAcc('${P_AHORA}')"><span>📞 Llamar ahora<small>recién entregados o cierre de tarjeta cerca</small></span><b style="color:var(--ok)">${cAcc(P_AHORA)}</b><span></span></div>
+    <div class="fila click${vistaAcc===P_SEM?" sel":""}" onclick="filtrarAcc('${P_SEM}')"><span>Esta semana</span><b style="color:var(--warn)">${cAcc(P_SEM)}</b><span></span></div>
+    ${vistaAcc?`<p style="margin:10px 0 0;font-size:13px"><a href="#" onclick="filtrarAcc('');return false" style="color:var(--acc)">← ver la lista completa</a></p>`:""}
+    ${tablaAcc(listaAcc.slice(0,400))}
+    ${listaAcc.length>400?`<p style="margin-top:8px;font-size:13px;color:var(--mute)">Se muestran los primeros 400 de ${listaAcc.length}.</p>`:""}
   </div>`;
 }
 
@@ -560,8 +658,12 @@ function render(){
   pintar();
   $("pie").textContent="Autosol Jujuy · Volkswagen · Pre-Entregas";
 }
+/* Tocar un recuadro filtra la tabla de abajo; tocarlo de nuevo la vuelve a abrir */
+function filtrarCm(p){ vistaCm=(vistaCm===p?"":p); render(); }
+function filtrarAcc(p){ vistaAcc=(vistaAcc===p?"":p); render(); }
+
 document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{
-  vista=b.dataset.v;
+  vista=b.dataset.v; vistaCm=""; vistaAcc="";
   document.querySelectorAll("#tabs button").forEach(x=>x.classList.toggle("on",x===b));
   render(); window.scrollTo(0,0);
 });
