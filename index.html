@@ -167,34 +167,131 @@ const fdia=d=>d?d.split("-").reverse().join("/"):"—";
 const HOY=new Date(); HOY.setHours(0,0,0,0);
 const dDesde=d=>d?Math.floor((HOY-new Date(d+"T00:00:00"))/864e5):null;
 
-let JAV=[],ACP=[],ACC=[],ENT=[],MES,ANIO;
+let JAV=[],ACP=[],ACC=[],ACV=[],ENT=[],MES,ANIO;
+let ACC_POR_VIN={}, OR_DE_ENTREGA={}, ENTREGA_POR_VIN={};
 const CANAL_BASE=["VENTA TRADICIONAL","PLANES DE AHORRO","V. CORPORATIVA"];
 const enMes=d=>d&&+d.slice(0,4)===ANIO&&+d.slice(5,7)===MES;
 
 function preparar(){
   JAV=(DATA.javier||[]).map(r=>({ent:r[0],fac:r[1],comprado:r[2],precio:r[3],motivo:(r[4]||"").trim(),mom:r[5],vin:r[6],mod:r[7]||"Sin dato"}));
-  ACP=(DATA.accPesos||[]).map(r=>({f:r[0],t:r[1]}));
+  ACP=(DATA.accPesos||[]).map(r=>({f:r[0],t:r[1],or:r[2]||"",vin:r[3]||""}));
+  /* Todas las OR de accesorios, las abra quien las abra: sirven para descartar
+     al cliente que ya volvió y compró. */
+  ACV=(DATA.accVin||[]).map(r=>({f:r[0],vin:r[1],or:r[2]||""}));
   ACC=(DATA.acc||[]).map(r=>({f:r[0],items:(r[1]||[]).map(tit)}));
-  ENT=(DATA.ent||[]).map(r=>({f:r[0],canal:String(r[1]||"").toUpperCase(),acc:r[5]}));
+  /* Lo que manda el Apps Script en ent:
+     0 fecha · 1 canal · 2 familia · 3 vendedor · 4 C.M. · 5 accesorios 0/1
+     6 fecha de recepción · 7 modelo completo · 8 interno / N° de OR */
+  ENT=(DATA.ent||[]).map(r=>({f:r[0],canal:String(r[1]||"").toUpperCase(),
+    fam:r[2]||"Sin dato",vend:r[3]||"",cm:+r[4]||0,acc:r[5],rec:r[6],
+    mod:r[7]||r[2]||"Sin dato",
+    int:String(r[8]||"").split("\n")[0].trim(),
+    accOr:String(r[9]||""),vin:String(r[10]||"")}));
+
+  /* Índices para cruzar OR de accesorios con entregas */
+  ACC_POR_VIN={}; OR_DE_ENTREGA={}; ENTREGA_POR_VIN={};
+  ACV.forEach(x=>{ if(!x.vin)return; (ACC_POR_VIN[x.vin]=ACC_POR_VIN[x.vin]||[]).push(x) });
+  ENT.forEach(r=>{ if(r.accOr)OR_DE_ENTREGA[r.accOr]=r.f; if(r.vin)ENTREGA_POR_VIN[r.vin]=r.f });
   const ult=[...ENT.map(r=>r.f),...JAV.map(r=>r.fac).filter(Boolean)].sort().pop()||new Date().toISOString().slice(0,10);
   ANIO=+ult.slice(0,4); MES=+ult.slice(5,7);
 }
 
-/* Prioridad de llamado: lo que dijo el cliente y cuánto falta para fin de mes. */
+/* ═══ VENTANAS DE OPORTUNIDAD ═══
+   Vida útil: desde la entrega hasta los 365 días. A los 300 se enciende el
+   último llamado — pasado el año ya no hay contrato que ofrecer.
+   Cierre de tarjeta: tercer jueves del mes (referencia local). */
+const VENTANA_FIN=365, VENTANA_ULTIMO=300, META_CM=0.30;
+const P_ULT="Último llamado", P_AHORA="Llamar ahora", P_SEM="Esta semana", P_LUEGO="Más adelante";
+function tercerJueves(a,m){const d=new Date(a,m-1,1);let n=0;
+  for(;;){if(d.getDay()===4){n++;if(n===3)break}d.setDate(d.getDate()+1)}
+  d.setHours(0,0,0,0);return d}
+function proxCierre(){let c=tercerJueves(HOY.getFullYear(),HOY.getMonth()+1);
+  if(c<HOY){const m=HOY.getMonth()+2;c=tercerJueves(HOY.getFullYear()+(m>12?1:0),m>12?m-12:m)}
+  return c}
+const CIERRE=proxCierre();
+const faltaCierre=Math.ceil((CIERRE-HOY)/864e5);
+const restan=d=>VENTANA_FIN-d;
+/* El cliente ya cerró la puerta: no vuelve a la lista. */
+const DESCARTE=/prefiero pagar|cambia el au|no lo necesita$|mas de un a|no tiene el vehiculo/i;
+
 function prioridad(x){
-  const fin=new Date(HOY.getFullYear(),HOY.getMonth()+1,0);
-  const faltan=Math.ceil((fin-HOY)/864e5);   // días hasta fin de mes
-  const m=(x.motivo||"").toLowerCase(), d=dDesde(x.ent)||0;
-  // Muy viejas: el cliente ya se acomodó, no es prioridad
-  if(d>150) return "Más adelante";
-  // Los que esperan el cierre de tarjeta o pidieron recordatorio: cuando se acerca fin de mes
-  if(/recordatorio|cierre de tarjeta|proximo mes|margen tarjeta/.test(m)) return (faltan<=7&&d<=120)?"Llamar ahora":"Esta semana";
-  // "En otro momento": el momento llega alrededor de los dos meses
-  if(/otro momento|no lo necesito|dinero/.test(m)) return (d>=45&&d<=120)?"Llamar ahora":"Esta semana";
-  return "Esta semana";
+  const d=dDesde(x.ent)||0, m=(x.motivo||"").toLowerCase();
+  if(d>VENTANA_FIN) return P_LUEGO;
+  if(d>=VENTANA_ULTIMO) return P_ULT;                       // se le termina el año
+  if(/recordatorio|cierre de tarjeta|proximo mes|margen tarjeta/.test(m))
+    return faltaCierre<=7?P_AHORA:P_SEM;                    // pidió que lo llamen al cierre
+  if(/otro momento|no lo necesito|dinero/.test(m))
+    return d>=45?P_AHORA:P_SEM;
+  return P_SEM;
 }
-const ordenP=x=>({"Llamar ahora":0,"Esta semana":1,"Más adelante":2})[prioridad(x)];
-const pendientes=()=>JAV.filter(x=>x.comprado===0&&/recordatorio|otro momento|no lo necesito|proximo mes|cierre de tarjeta|espera|dinero/i.test(x.motivo));
+function prioridadAcc(d){
+  if(d>VENTANA_FIN) return P_LUEGO;
+  if(d>=VENTANA_ULTIMO) return P_ULT;
+  if(d<=45) return P_AHORA;                                  // recién entregado: mejor momento
+  if(faltaCierre<=7&&d<=150) return P_AHORA;
+  return P_SEM;
+}
+const ordenP=x=>({[P_ULT]:0,[P_AHORA]:1,[P_SEM]:2,[P_LUEGO]:3})[prioridad(x)];
+const pendientes=()=>JAV.filter(x=>x.comprado===0&&(dDesde(x.ent)||0)<=VENTANA_FIN&&!DESCARTE.test(x.motivo||""));
+/* Ya compró accesorios después de la entrega: no se lo vuelve a llamar.
+   No importa quién abrió la OR — Mauro, Tatiana, Guantay, Pablo o Javier. */
+const yaVolvio=r=>!!(r.vin&&(ACC_POR_VIN[r.vin]||[]).some(x=>x.f>=r.f));
+/* Entregas sin accesorios, todavía dentro de la ventana y que no volvieron */
+const oportAcc=()=>ENT.filter(r=>CANAL_BASE.includes(r.canal)&&!r.acc&&
+    (dDesde(r.f)||0)<=VENTANA_FIN&&!yaVolvio(r))
+  .map(r=>({...r,d:dDesde(r.f)||0})).sort((a,b)=>
+    ({[P_ULT]:0,[P_AHORA]:1,[P_SEM]:2,[P_LUEGO]:3})[prioridadAcc(a.d)]-
+    ({[P_ULT]:0,[P_AHORA]:1,[P_SEM]:2,[P_LUEGO]:3})[prioridadAcc(b.d)]||a.d-b.d);
+
+/* Ritmo del mes y proyección de cierre */
+function ritmo(valor){
+  const dias=new Date(ANIO,MES,0).getDate();
+  const hoyDia=(HOY.getMonth()+1===MES&&HOY.getFullYear()===ANIO)?Math.min(HOY.getDate(),dias):dias;
+  return {dias,hoyDia,restan:dias-hoyDia,proy:hoyDia?valor/hoyDia*dias:valor};
+}
+function rankModelos(anio){
+  const t={};
+  ENT.forEach(r=>{ if(+String(r.f).slice(0,4)!==anio)return;
+    if(!CANAL_BASE.includes(r.canal))return;
+    const k=r.fam; t[k]=t[k]||{ent:0,cm:0,acc:0};
+    t[k].ent++; if(r.cm)t[k].cm++; if(r.acc)t[k].acc++; });
+  return Object.entries(t).map(([k,v])=>({mod:k,...v,
+    pCm:v.ent?Math.round(v.cm/v.ent*100):0, pAcc:v.ent?Math.round(v.acc/v.ent*100):0}))
+    .filter(x=>x.ent>=3).sort((a,b)=>b.ent-a.ent);
+}
+function barraMod(rows,campo,pct,leyenda){
+  if(!rows.length)return '<div class="vacio">Sin datos suficientes.</div>';
+  const max=Math.max(...rows.map(r=>r[pct]),1);
+  return `<div class="rk">${rows.map(r=>{
+    const col=r[pct]>=40?"var(--ok)":r[pct]>=25?"var(--warn)":"var(--bad)";
+    return `<div style="display:block;border-bottom:1px dotted var(--line);padding:8px 0">
+      <div style="display:flex;justify-content:space-between;font-size:14px">
+        <span><b>${esc(r.mod)}</b> <small style="color:var(--mute)">${r[campo]} de ${r.ent} entregas</small></span>
+        <b style="color:${col}">${r[pct]}%</b></div>
+      <div style="height:6px;border-radius:99px;background:var(--line);margin-top:5px">
+        <div style="height:6px;border-radius:99px;width:${Math.round(r[pct]/max*100)}%;background:${col}"></div></div>
+    </div>`}).join("")}</div>
+    <p style="font-size:12px;color:var(--mute);margin-top:8px">${leyenda}</p>`;
+}
+/* Accesorios del mes: colocados en la entrega vs recuperados después.
+   Necesita que el Apps Script mande el N° de orden y el chasis de cada OR.
+   Mientras no lleguen, todo cae en "sin clasificar" y la tarjeta lo avisa. */
+function cortesAcc(){
+  const r={ent:{n:0,m:0},post:{n:0,m:0},sin:{n:0,m:0},dias:[]};
+  ACP.filter(x=>enMes(x.f)).forEach(x=>{
+    if(x.or&&OR_DE_ENTREGA[x.or]){ r.ent.n++; r.ent.m+=x.t; return }
+    const fe=x.vin?ENTREGA_POR_VIN[x.vin]:null;
+    if(fe&&x.f>=fe){
+      r.post.n++; r.post.m+=x.t;
+      r.dias.push(Math.round((new Date(x.f+"T00:00:00")-new Date(fe+"T00:00:00"))/864e5));
+      return;
+    }
+    r.sin.n++; r.sin.m+=x.t;
+  });
+  r.promDias=r.dias.length?Math.round(r.dias.reduce((a,b)=>a+b,0)/r.dias.length):0;
+  return r;
+}
+const chip=p=>`<span class="pill ${p===P_ULT?"p-b":p===P_AHORA?"p-ok":p===P_SEM?"p-w":"p-n"}">${p===P_ULT?"🔥 Último":p===P_AHORA?"📞 Ahora":p}</span>`;
 
 /* Gráficos */
 let INST=[],Q=[],cid=0;
@@ -272,16 +369,34 @@ function vHoy(){
   const base=ENT.filter(r=>enMes(r.f)&&CANAL_BASE.includes(r.canal)).length;
   const vendidos=JAV.filter(x=>x.comprado===1&&enMes(x.fac));
   const plata=vendidos.reduce((s,x)=>s+x.precio,0);
-  const accM=ACP.filter(x=>enMes(x.f)).reduce((s,x)=>s+x.t,0);
+  const orMes=ACP.filter(x=>enMes(x.f));
+  const accM=orMes.reduce((s,x)=>s+x.t,0);
   const objAcc=DATA.objAcc||0;
   const tCm=base?Math.round(vendidos.length/base*100):0;
-  const faltanCm=Math.max(0,Math.ceil(base*0.30)-vendidos.length);
+  const metaCm=Math.ceil(base*META_CM);
+  const faltanCm=Math.max(0,metaCm-vendidos.length);
   const faltanAcc=Math.max(0,objAcc-accM);
   const ticket=vendidos.length?plata/vendidos.length:0;
-  const llamar=pendientes().filter(x=>prioridad(x)==="Llamar ahora");
+  const tickAcc=orMes.length?accM/orMes.length:0;
   const colCm=tCm>=30?"var(--ok)":tCm>=24?"var(--warn)":"var(--bad)";
   const cumplAcc=objAcc?Math.round(accM/objAcc*100):0;
   const colAcc=cumplAcc>=100?"var(--ok)":cumplAcc>=80?"var(--warn)":"var(--bad)";
+
+  /* Proyección: si el mes sigue al ritmo de hoy */
+  const R=ritmo(1);
+  const pCm=Math.round(vendidos.length/(R.hoyDia||1)*R.dias);
+  const pBase=Math.round(base/(R.hoyDia||1)*R.dias);
+  const pTasa=pBase?Math.round(pCm/pBase*100):0;
+  const pAcc=accM/(R.hoyDia||1)*R.dias;
+  const colP=pTasa>=30?"var(--ok)":pTasa>=24?"var(--warn)":"var(--bad)";
+  const colPA=objAcc&&pAcc>=objAcc?"var(--ok)":"var(--bad)";
+  const orFaltan=tickAcc?Math.ceil(faltanAcc/tickAcc):0;
+
+  const pend=pendientes();
+  const urgentes=pend.filter(x=>[P_ULT,P_AHORA].includes(prioridad(x)))
+    .sort((a,b)=>ordenP(a)-ordenP(b)||(dDesde(b.ent)||0)-(dDesde(a.ent)||0));
+  const accUrg=oportAcc().filter(x=>[P_ULT,P_AHORA].includes(prioridadAcc(x.d)));
+
   return `
   <div class="card">
     <h2>Contratos de ${MESES[MES-1].toLowerCase()} <span>meta 30% de las entregas</span></h2>
@@ -297,17 +412,35 @@ function vHoy(){
     <h2>Accesorios de ${MESES[MES-1].toLowerCase()} <span>objetivo ${objAcc?mill(objAcc):"sin cargar"}</span></h2>
     <div class="meta">${aro(cumplAcc,colAcc)}
       <div><div class="n" style="color:${colAcc}">${cumplAcc}%</div>
-        <div class="t">${mill(accM)} facturados</div>
+        <div class="t">${mill(accM)} facturados en ${orMes.length} OR</div>
         <div class="f" style="color:${faltanAcc?"var(--bad)":"var(--ok)"}">${faltanAcc?`Te faltan ${mill(faltanAcc)}`:"Objetivo alcanzado 👏"}</div></div>
     </div>
   </div>
 
-  ${llamar.length?`<div class="card" style="border-left:4px solid var(--ok)">
-    <h2>📞 Empezá por estos <span>${llamar.length} en la lista de prioridad</span></h2>
-    <p style="font-size:13px;color:var(--ink2);margin-bottom:8px">Los más recientes primero: son los que más chances tienen de cerrar.</p>
-    ${tabla([...llamar].sort((a,b)=>(dDesde(a.ent)||0)-(dDesde(b.ent)||0)).slice(0,8))}
+  <div class="card" style="border-left:4px solid var(--acc)">
+    <h2>Cómo cerraría el mes <span>${R.restan>0?`quedan ${R.restan} días`:"mes cerrado"}</span></h2>
+    <p style="font-size:13px;color:var(--ink2);margin-bottom:8px">Si el resto del mes sigue al ritmo de estos ${R.hoyDia} días.</p>
+    <div class="fila"><span>Contratos proyectados<small>sobre ~${pBase} entregas · tasa ${pTasa}%</small></span><b style="color:${colP}">${pCm}</b><span></span></div>
+    <div class="fila"><span>Accesorios proyectados<small>objetivo ${objAcc?mill(objAcc):"sin cargar"}</small></span><b style="color:${colPA}">${mill(pAcc)}</b><span></span></div>
+    ${(faltanCm||faltanAcc)?`<p style="margin-top:10px;font-size:14px;color:var(--ink2);line-height:1.5">
+      <b>Para llegar a la meta:</b><br>
+      ${faltanCm?`· ${faltanCm} contrato${faltanCm>1?"s":""} más${R.restan>0?` — ${(faltanCm/Math.max(R.restan,1)).toFixed(1)} por día`:""}<br>`:""}
+      ${faltanAcc?`· ${mill(faltanAcc)} en accesorios${orFaltan?` — unas ${orFaltan} OR al ticket actual de ${pesos(tickAcc)}`:""}`:""}
+    </p>`:`<p style="margin-top:10px;font-size:14px;color:var(--ok)"><b>Vas arriba de los dos objetivos 👏</b></p>`}
+  </div>
+
+  ${urgentes.length?`<div class="card" style="border-left:4px solid var(--ok)">
+    <h2>📞 Contratos: empezá por estos <span>${urgentes.length} de ${pend.length} pendientes</span></h2>
+    <p style="font-size:13px;color:var(--ink2);margin-bottom:8px">🔥 son los que están por cumplir el año — después ya no se puede ofrecer. Próximo cierre de tarjeta: ${fdia(CIERRE.toISOString().slice(0,10))}.</p>
+    ${tabla(urgentes.slice(0,8))}
     <p style="margin-top:8px;font-size:13px;color:var(--mute)">La lista completa está en la pestaña Contratos.</p>
-  </div>`:`<div class="card"><h2>📞 Llamados</h2><div class="vacio">Nada urgente por ahora.</div></div>`}
+  </div>`:`<div class="card"><h2>📞 Contratos</h2><div class="vacio">Nada urgente por ahora.</div></div>`}
+
+  ${accUrg.length?`<div class="card" style="border-left:4px solid var(--acc)">
+    <h2>🔧 Accesorios: oportunidades <span>${accUrg.length} entregas sin accesorios</span></h2>
+    ${tablaAcc(accUrg.slice(0,8))}
+    <p style="margin-top:8px;font-size:13px;color:var(--mute)">La lista completa está en la pestaña Accesorios.</p>
+  </div>`:""}
 
   ${racha()}
 
@@ -316,25 +449,44 @@ function vHoy(){
 
 function tabla(arr){
   if(!arr.length)return '<div class="vacio">Sin clientes pendientes.</div>';
-  return `<div class="tw"><table><tr><th></th><th>Entregada</th><th class="r">Días</th><th>VIN</th><th>Modelo</th><th>Qué dijo</th></tr>
-  ${arr.map(x=>{const p=prioridad(x);
-    return `<tr><td><span class="pill ${p==="Llamar ahora"?"p-ok":p==="Esta semana"?"p-w":"p-n"}">${p==="Llamar ahora"?"📞 Ahora":p}</span></td>
-    <td>${fdia(x.ent)}</td><td class="r"><span class="pill ${dDesde(x.ent)>90?"p-b":"p-w"}">${dDesde(x.ent)}</span></td>
+  return `<div class="tw"><table><tr><th></th><th>Entregada</th><th class="r">Le quedan</th><th>VIN</th><th>Modelo</th><th>Qué dijo</th></tr>
+  ${arr.map(x=>{const p=prioridad(x), d=dDesde(x.ent)||0, q=restan(d);
+    return `<tr><td>${chip(p)}</td>
+    <td>${fdia(x.ent)}<small style="display:block;color:var(--mute);font-size:11px">${d} días</small></td>
+    <td class="r"><span class="pill ${q<=65?"p-b":q<=180?"p-w":"p-n"}">${q} d</span></td>
     <td>${esc(x.vin)}</td><td>${esc(x.mod)}</td><td>${esc(tit(x.motivo))}</td></tr>`}).join("")}</table></div>`;
+}
+function tablaAcc(arr){
+  if(!arr.length)return '<div class="vacio">Todas las entregas salieron con accesorios 👏</div>';
+  return `<div class="tw"><table><tr><th></th><th>Entregada</th><th class="r">Le quedan</th><th>Interno / OR</th><th>Modelo</th></tr>
+  ${arr.map(x=>{const p=prioridadAcc(x.d), q=restan(x.d);
+    return `<tr><td>${chip(p)}</td>
+    <td>${fdia(x.f)}<small style="display:block;color:var(--mute);font-size:11px">${x.d} días</small></td>
+    <td class="r"><span class="pill ${q<=65?"p-b":q<=180?"p-w":"p-n"}">${q} d</span></td>
+    <td>${esc(x.int||"—")}</td><td>${esc(x.mod)}</td></tr>`}).join("")}</table></div>`;
 }
 
 function vContratos(){
   const vendidos=JAV.filter(x=>x.comprado===1&&enMes(x.fac));
   const pend=[...pendientes()].sort((a,b)=>ordenP(a)-ordenP(b)||String(b.ent).localeCompare(String(a.ent)));
   const enEnt=vendidos.filter(x=>x.mom==="En la entrega").length;
+  const recup=vendidos.length-enEnt;
+  const cuenta=p=>pend.filter(x=>prioridad(x)===p).length;
   return `
   <div class="card"><h2>Vendidos en ${MESES[MES-1].toLowerCase()}</h2>
-    <div class="fila"><span>Contratos<small>${enEnt} en la entrega · ${vendidos.length-enEnt} post entrega</small></span><b>${vendidos.length}</b><span></span></div>
+    <div class="fila"><span>Contratos<small>${enEnt} en la entrega · ${recup} post entrega</small></span><b>${vendidos.length}</b><span></span></div>
+    <div class="fila"><span>Recuperados post entrega<small>los que se cerraron llamando</small></span><b style="color:var(--ok)">${recup}</b><span></span></div>
     <div class="fila"><span>Facturado</span><b>${pesos(vendidos.reduce((s,x)=>s+x.precio,0))}</b><span></span></div>
   </div>
-  <div class="card"><h2>Tu lista de llamados <span>${pend.length} clientes</span></h2>
-    <p style="font-size:13px;color:var(--ink2);margin-bottom:10px">Ninguno dijo que no: pidieron recordatorio, esperan el cierre de tarjeta o dijeron "en otro momento". Buscá el cliente por el VIN en tu planilla.</p>
+  <div class="card"><h2>Oportunidades de contrato <span>${pend.length} clientes</span></h2>
+    <div class="fila"><span>🔥 Último llamado<small>les queda menos de 2 meses de ventana</small></span><b style="color:var(--bad)">${cuenta(P_ULT)}</b><span></span></div>
+    <div class="fila"><span>📞 Llamar ahora<small>cierre de tarjeta el ${fdia(CIERRE.toISOString().slice(0,10))}</small></span><b style="color:var(--ok)">${cuenta(P_AHORA)}</b><span></span></div>
+    <div class="fila"><span>Esta semana</span><b style="color:var(--warn)">${cuenta(P_SEM)}</b><span></span></div>
+    <p style="font-size:13px;color:var(--ink2);margin:12px 0 10px">Ninguno dijo que no: pidieron recordatorio, esperan el cierre de tarjeta o dijeron "en otro momento". Buscá el cliente por el VIN en tu planilla.</p>
     ${tabla(pend)}
+  </div>
+  <div class="card"><h2>Qué modelo compra contrato <span>${ANIO}</span></h2>
+    ${barraMod(rankModelos(ANIO).slice().sort((a,b)=>b.pCm-a.pCm),"cm","pCm","Modelos con 3 o más entregas en el año. Verde: arriba del 40%.")}
   </div>`;
 }
 
@@ -344,6 +496,8 @@ function vAccesorios(){
   const items={}; ACC.filter(x=>enMes(x.f)).forEach(x=>x.items.forEach(i=>items[i]=(items[i]||0)+1));
   const rk=Object.entries(items).sort((a,b)=>b[1]-a[1]).slice(0,15);
   const c=C();
+  const op=oportAcc();
+  const cAcc=p=>op.filter(x=>prioridadAcc(x.d)===p).length;
   const serie=new Array(12).fill(null);
   ACP.forEach(x=>{if(+x.f.slice(0,4)===ANIO){const m=+x.f.slice(5,7)-1;serie[m]=(serie[m]||0)+x.t}});
   return `
@@ -361,6 +515,23 @@ function vAccesorios(){
   },230)}</div>
   <div class="card"><h2>Lo que más se coloca <span>${MESES[MES-1].toLowerCase()}</span></h2>
     <div class="rk">${rk.length?rk.map(([k,v],i)=>`<div><span><em>${i+1}</em>${esc(k)}</span><b>${v}</b></div>`).join(""):'<div class="vacio">Sin datos del mes.</div>'}</div>
+  </div>
+  ${(()=>{const c=cortesAcc(); if(!c.ent.n&&!c.post.n&&!c.sin.n)return "";
+    return `<div class="card"><h2>Cómo se vendieron <span>${MESES[MES-1].toLowerCase()}</span></h2>
+    <div class="fila"><span>En la entrega<small>${c.ent.n} OR</small></span><b>${pesos(c.ent.m)}</b><span></span></div>
+    <div class="fila"><span>Recuperados post entrega<small>${c.post.n} OR${c.promDias?` · el cliente volvió a los ${c.promDias} días en promedio`:""}</small></span><b style="color:var(--ok)">${pesos(c.post.m)}</b><span></span></div>
+    ${c.sin.n?`<p style="margin-top:10px;font-size:13px;color:var(--mute)">${c.sin.n} OR sin clasificar (${pesos(c.sin.m)}): todavía no llegan el N° de orden y el chasis desde la hoja OR.</p>`:""}
+    </div>`})()}
+
+  <div class="card"><h2>Qué modelo lleva accesorios <span>${ANIO}</span></h2>
+    ${barraMod(rankModelos(ANIO).slice().sort((a,b)=>b.pAcc-a.pAcc),"acc","pAcc","Modelos con 3 o más entregas en el año. Verde: arriba del 40%.")}
+  </div>
+  <div class="card"><h2>Oportunidades de accesorios <span>${op.length} entregas sin accesorios</span></h2>
+    <div class="fila"><span>🔥 Último llamado<small>les queda menos de 2 meses de ventana</small></span><b style="color:var(--bad)">${cAcc(P_ULT)}</b><span></span></div>
+    <div class="fila"><span>📞 Llamar ahora<small>recién entregados o cierre de tarjeta cerca</small></span><b style="color:var(--ok)">${cAcc(P_AHORA)}</b><span></span></div>
+    <div class="fila"><span>Esta semana</span><b style="color:var(--warn)">${cAcc(P_SEM)}</b><span></span></div>
+    <p style="font-size:13px;color:var(--ink2);margin:12px 0 10px">Entregas que salieron sin ningún accesorio y todavía están dentro del año. Buscá el cliente por el interno o el N° de OR en tu planilla.</p>
+    ${tablaAcc(op)}
   </div>`;
 }
 
