@@ -62,6 +62,13 @@ td{border-bottom:1px solid var(--line);padding:9px 8px}
 .p-b{background:rgba(194,59,59,.14);color:var(--bad)}.p-n{background:rgba(123,138,160,.14);color:var(--ink2)}
 .tw{overflow:auto;max-height:70vh}
 .vacio{color:var(--mute);font-size:14px;padding:10px 0}
+.sub{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mesnav{border:1px solid var(--line);background:var(--fondo);color:var(--ink);
+  border-radius:8px;width:26px;height:26px;line-height:1;font-size:16px;cursor:pointer;padding:0}
+.mesnav:disabled{opacity:.3;cursor:default}
+.sub b{font-size:14px;color:var(--ink)}
+.sub .hoy{color:var(--acc);font-size:13px;text-decoration:none}
+.sub .gen{color:var(--mute);font-size:13px}
 .fila.click{cursor:pointer;transition:background .12s,box-shadow .12s}
 .fila.click:hover{box-shadow:inset 0 0 0 1px var(--acc)}
 .fila.sel{box-shadow:inset 0 0 0 2px var(--acc)}
@@ -167,6 +174,52 @@ const mill=n=>"$ "+(n/1e6).toLocaleString("es-AR",{minimumFractionDigits:1,maxim
 const pesos=n=>"$ "+fmt(n);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const tit=s=>String(s).toLowerCase().replace(/(^|[\s.\/(])\S/g,m=>m.toUpperCase());
+
+/* ── NOMBRES DE ACCESORIOS ──────────────────────────────────────────────
+   Los accesorios se escriben a mano en cada OR, así que del mismo producto
+   llegan diez formas distintas: "LONA SOFT", "Lona maritima", "lona amarok
+   v6", y encima con erratas ("Estrobos Off Roods", "Matafuegoc").
+
+   Acá se agrupan por lo que son, no por cómo se escribieron. Cada renglón es
+   el nombre que se muestra y el texto que tiene que encontrar adentro.
+   Se revisan en orden y gana el primero, por eso los estribos off road van
+   antes que los estribos a secas.
+
+   Para agregar un accesorio nuevo: sumá un renglón con su nombre y una
+   palabra que lo identifique. Lo que no entra en ninguna regla se muestra
+   tal cual vino, así siempre se ve lo que falta clasificar. */
+const ACC_REGLAS = [
+  ["Estribos off road",           /estr[oi]b.*(off|of)\s*ro|(off|of)\s*ro.*estr[oi]b/],
+  ["Estribos planos",             /estr[oi]b.*plan|plan.*estr[oi]b/],
+  ["Estribos",                    /estr[oi]b/],
+  ["Tapa rígida",                 /tapa/],
+  ["Lona",                        /lona/],
+  ["Cobertor",                    /c[ou]bertor/],
+  ["Chapón",                      /chapon/],
+  ["Matafuego",                   /mata\s*fueg/],
+  ["Sensores de estacionamiento", /sensor|sesnor/],
+  ["Deflectores de ventanillas",  /def\w*tor/],
+  ["Tuercas de seguridad",        /tuerca/],
+  ["Kit de seguridad",            /kit.*seg|seg.*kit/],
+  ["Alarma",                      /alarma/],
+  ["Cámara",                      /camara/],
+  ["Alfombras",                   /alfombra/],
+  ["Barras de techo",             /barra/],
+  ["Enganche de remolque",        /enganche|remolque/],
+  ["Polarizado",                  /polariz/],
+  ["Roll bar",                    /roll\s*bar|antivuelco/],
+  ["Cubre volante",               /cubre\s*volante/]
+];
+/* Deja el texto comparable: sin mayúsculas, sin acentos, sin signos ni espacios de más */
+function llaveAcc(s){
+  return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+}
+function canonAcc(s){
+  const k = llaveAcc(s);
+  for (let i = 0; i < ACC_REGLAS.length; i++) if (ACC_REGLAS[i][1].test(k)) return ACC_REGLAS[i][0];
+  return tit(s);
+}
 const fdia=d=>d?d.split("-").reverse().join("/"):"—";
 const HOY=new Date(); HOY.setHours(0,0,0,0);
 const dDesde=d=>d?Math.floor((HOY-new Date(d+"T00:00:00"))/864e5):null;
@@ -175,6 +228,8 @@ let JAV=[],ACP=[],ACC=[],ACV=[],CMV=[],ENT=[],MES,ANIO;
 let ACC_POR_VIN={}, OR_DE_ENTREGA={}, ENTREGA_POR_VIN={};
 let CM_POR_VIN={}, SERV_POR_VIN={}, MOTIVO_POR_VIN={};
 let vistaCm="", vistaAcc="";   /* filtro activo al tocar un recuadro */
+let rkAnio=0;                  /* ranking de accesorios: 0 = mes · 1 = todo el año */
+let MES_HOY, ANIO_HOY, MES_MIN=1, ANIO_MIN=2025;   /* límites para moverse entre meses */
 const CANAL_BASE=["VENTA TRADICIONAL","PLANES DE AHORRO","V. CORPORATIVA"];
 const enMes=d=>d&&+d.slice(0,4)===ANIO&&+d.slice(5,7)===MES;
 
@@ -203,7 +258,7 @@ function preparar(){
   /* Services hechos: hasta qué kilometraje llegó y si lo pagó o se lo cubrieron */
   SERV_POR_VIN={};
   (DATA.servVin||[]).forEach(r=>{ SERV_POR_VIN[r[0]]={km:+r[1]||0,pago:!!r[2],cub:!!r[3],f:r[4]||null} });
-  ACC=(DATA.acc||[]).map(r=>({f:r[0],items:(r[1]||[]).map(tit)}));
+  ACC=(DATA.acc||[]).map(r=>({f:r[0],items:(r[1]||[]).map(canonAcc)}));
   /* Lo que manda el Apps Script en ent:
      0 fecha · 1 canal · 2 familia · 3 vendedor · 4 C.M. · 5 accesorios 0/1
      6 fecha de recepción · 7 modelo completo · 8 interno / N° de OR */
@@ -217,8 +272,15 @@ function preparar(){
   ACC_POR_VIN={}; OR_DE_ENTREGA={}; ENTREGA_POR_VIN={};
   ACV.forEach(x=>{ if(!x.vin)return; (ACC_POR_VIN[x.vin]=ACC_POR_VIN[x.vin]||[]).push(x) });
   ENT.forEach(r=>{ if(r.accOr)OR_DE_ENTREGA[r.accOr]=r.f; if(r.vin)ENTREGA_POR_VIN[r.vin]=r.f });
-  const ult=[...ENT.map(r=>r.f),...JAV.map(r=>r.fac).filter(Boolean)].sort().pop()||new Date().toISOString().slice(0,10);
-  ANIO=+ult.slice(0,4); MES=+ult.slice(5,7);
+  /* El mes que se mira lo decide el calendario, no el dato más nuevo. Antes se
+     tomaba la fecha más alta de los datos, así que al cargar una entrega programada
+     para el mes que viene el tablero saltaba de mes solo, en blanco, y tapaba el
+     cierre del mes en curso. Con las flechas de arriba se mira cualquier mes. */
+  MES_HOY = HOY.getMonth() + 1; ANIO_HOY = HOY.getFullYear();
+  if (!MES) { MES = MES_HOY; ANIO = ANIO_HOY; }
+  /* Desde qué mes hay datos, para no dejar retroceder al vacío */
+  const pri=[...ENT.map(r=>r.f),...JAV.map(r=>r.fac).filter(Boolean)].sort().shift();
+  if(pri){ ANIO_MIN=+pri.slice(0,4); MES_MIN=+pri.slice(5,7); }
 }
 
 /* ═══ VENTANAS DE OPORTUNIDAD ═══
@@ -520,17 +582,11 @@ function vHoy(){
     </p>`:`<p style="margin-top:10px;font-size:14px;color:var(--ok)"><b>Vas arriba de los dos objetivos 👏</b></p>`}
   </div>
 
-  ${urgentes.length?`<div class="card" style="border-left:4px solid var(--ok)">
-    <h2>📞 Contratos: empezá por estos <span>${urgentes.length} de ${pend.length} oportunidades</span></h2>
-    <p style="font-size:13px;color:var(--ink2);margin-bottom:8px">🔥 son los que están por cumplir el año. El 🔧 ya volvió al service y lo pagó: ese no tiene contrato. Próximo cierre de tarjeta: ${fdia(CIERRE.toISOString().slice(0,10))}.</p>
-    ${tabla(urgentes.slice(0,8))}
-    <p style="margin-top:8px;font-size:13px;color:var(--mute)">La lista completa está en la pestaña Contratos.</p>
-  </div>`:`<div class="card"><h2>📞 Contratos</h2><div class="vacio">Nada urgente por ahora.</div></div>`}
-
-  ${accUrg.length?`<div class="card" style="border-left:4px solid var(--acc)">
-    <h2>🔧 Accesorios: oportunidades <span>${accUrg.length} entregas sin accesorios</span></h2>
-    ${tablaAcc(accUrg.slice(0,8))}
-    <p style="margin-top:8px;font-size:13px;color:var(--mute)">La lista completa está en la pestaña Accesorios.</p>
+  ${(urgentes.length||accUrg.length)?`<div class="card">
+    <h2>Para llamar</h2>
+    <div class="fila"><span>Contratos<small>${urgentes.length?"🔥 por cumplir el año y 📞 para llamar ahora":"nada urgente por ahora"}</small></span><b style="color:${urgentes.length?"var(--ok)":"var(--mute)"}">${urgentes.length}</b><span></span></div>
+    <div class="fila"><span>Accesorios<small>${accUrg.length?"entregas sin accesorios, dentro de la ventana":"nada urgente por ahora"}</small></span><b style="color:${accUrg.length?"var(--acc)":"var(--mute)"}">${accUrg.length}</b><span></span></div>
+    <p style="margin:10px 0 0;font-size:13px;color:var(--mute)">El detalle de cada uno está en las pestañas Contratos y Accesorios.</p>
   </div>`:""}
 
   ${racha()}
@@ -606,8 +662,12 @@ function vContratos(){
 function vAccesorios(){
   const delMes=ACP.filter(x=>enMes(x.f));
   const total=delMes.reduce((s,x)=>s+x.t,0), obj=DATA.objAcc||0;
-  const items={}; ACC.filter(x=>enMes(x.f)).forEach(x=>x.items.forEach(i=>items[i]=(items[i]||0)+1));
-  const rk=Object.entries(items).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  /* El ranking se puede mirar del mes o de todo el año. En el año se muestran más
+     renglones, que es donde se ve si quedó algún accesorio con el nombre mal escrito. */
+  const baseRk=rkAnio?ACC.filter(x=>+String(x.f).slice(0,4)===ANIO):ACC.filter(x=>enMes(x.f));
+  const items={}; baseRk.forEach(x=>x.items.forEach(i=>items[i]=(items[i]||0)+1));
+  const rk=Object.entries(items).sort((a,b)=>b[1]-a[1]).slice(0,rkAnio?40:15);
+  const totalRk=Object.keys(items).length;
   const c=C();
   const op=oportAcc();
   const cAcc=p=>op.filter(x=>prioridadAcc(x.d)===p).length;
@@ -627,8 +687,10 @@ function vAccesorios(){
     yAxis:{type:"value",splitLine:{lineStyle:{color:c.split}},axisLabel:{color:c.mute,fontSize:11,formatter:v=>(v/1e6)+"M"}},
     series:[{type:"bar",data:serie,barMaxWidth:28,itemStyle:{color:c.vw,borderRadius:[4,4,0,0]}}]
   },230)}</div>
-  <div class="card"><h2>Lo que más se coloca <span>${MESES[MES-1].toLowerCase()}</span></h2>
-    <div class="rk">${rk.length?rk.map(([k,v],i)=>`<div><span><em>${i+1}</em>${esc(k)}</span><b>${v}</b></div>`).join(""):'<div class="vacio">Sin datos del mes.</div>'}</div>
+  <div class="card"><h2>Lo que más se coloca
+    <span><a href="#" onclick="verRk(0);return false" style="color:${rkAnio?"var(--mute)":"var(--acc)"};text-decoration:none">${MESES[MES-1].toLowerCase()}</a> · <a href="#" onclick="verRk(1);return false" style="color:${rkAnio?"var(--acc)":"var(--mute)"};text-decoration:none">todo ${ANIO}</a></span></h2>
+    <div class="rk">${rk.length?rk.map(([k,v],i)=>`<div><span><em>${i+1}</em>${esc(k)}</span><b>${v}</b></div>`).join(""):`<div class="vacio">Sin datos ${rkAnio?"del año":"del mes"}.</div>`}</div>
+    ${totalRk>rk.length?`<p style="margin-top:8px;font-size:13px;color:var(--mute)">Se muestran los primeros ${rk.length} de ${totalRk} accesorios distintos.</p>`:""}
   </div>
   ${(()=>{const c=cortesAcc(); if(!c.ent.n&&!c.post.n&&!c.sin.n)return "";
     return `<div class="card"><h2>Cómo se vendieron <span>${MESES[MES-1].toLowerCase()}</span></h2>
@@ -653,7 +715,15 @@ function vAccesorios(){
 
 function render(){
   Q=[];
-  $("periodo").textContent=`${MESES[MES-1]} ${ANIO} · datos al ${DATA.generado||""}`;
+  const atras=(ANIO>ANIO_MIN)||(ANIO===ANIO_MIN&&MES>MES_MIN);
+  const alante=(ANIO<ANIO_HOY)||(ANIO===ANIO_HOY&&MES<MES_HOY);
+  const flecha=(d,ok,txt)=>`<button class="mesnav" ${ok?`onclick="moverMes(${d})"`:"disabled"}>${txt}</button>`;
+  $("periodo").innerHTML=
+    flecha(-1,atras,"‹")+
+    `<b>${MESES[MES-1]} ${ANIO}</b>`+
+    flecha(1,alante,"›")+
+    ((MES!==MES_HOY||ANIO!==ANIO_HOY)?`<a href="#" onclick="volverAlMes();return false" class="hoy">volver al mes actual</a>`:"")+
+    `<span class="gen">datos al ${DATA.generado||""}</span>`;
   $("cuerpo").innerHTML=vista==="hoy"?vHoy():vista==="contratos"?vContratos():vAccesorios();
   pintar();
   $("pie").textContent="Autosol Jujuy · Volkswagen · Pre-Entregas";
@@ -661,6 +731,18 @@ function render(){
 /* Tocar un recuadro filtra la tabla de abajo; tocarlo de nuevo la vuelve a abrir */
 function filtrarCm(p){ vistaCm=(vistaCm===p?"":p); render(); }
 function filtrarAcc(p){ vistaAcc=(vistaAcc===p?"":p); render(); }
+/* Cambia el ranking de accesorios entre el mes y el año entero */
+function verRk(v){ rkAnio=v; render(); }
+
+/* Mover el mes que se está mirando, sin pasarse del mes actual ni del primer dato */
+function moverMes(d){
+  let m=MES+d, a=ANIO;
+  if(m<1){m=12;a--} else if(m>12){m=1;a++}
+  if(a>ANIO_HOY||(a===ANIO_HOY&&m>MES_HOY))return;
+  if(a<ANIO_MIN||(a===ANIO_MIN&&m<MES_MIN))return;
+  MES=m; ANIO=a; vistaCm=""; vistaAcc=""; render();
+}
+function volverAlMes(){ MES=MES_HOY; ANIO=ANIO_HOY; vistaCm=""; vistaAcc=""; render(); }
 
 document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{
   vista=b.dataset.v; vistaCm=""; vistaAcc="";
