@@ -189,9 +189,10 @@ const tit=s=>String(s).toLowerCase().replace(/(^|[\s.\/(])\S/g,m=>m.toUpperCase(
    palabra que lo identifique. Lo que no entra en ninguna regla se muestra
    tal cual vino, así siempre se ve lo que falta clasificar. */
 const ACC_REGLAS = [
-  ["Estribos off road",           /estr[oi]b.*(off|of)\s*ro|(off|of)\s*ro.*estr[oi]b/],
-  ["Estribos planos",             /estr[oi]b.*plan|plan.*estr[oi]b/],
-  ["Estribos",                    /estr[oi]b/],
+  /* La vocal del medio va opcional: llegan escritos "estribos", "estrobos" y "estrbos" */
+  ["Estribos off road",           /estr[oi]?b.*(off|of)\s*ro|(off|of)\s*ro.*estr[oi]?b/],
+  /* Planos y a secas van juntos: lo único que se separa son los off road */
+  ["Estribos",                    /estr[oi]?b/],
   ["Tapa rígida",                 /tapa/],
   ["Lona",                        /lona/],
   ["Cobertor",                    /c[ou]bertor/],
