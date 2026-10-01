@@ -458,20 +458,25 @@ function aro(valor,color){
 }
 
 /* Barras + las dos tasas superpuestas, cada una se puede prender y apagar */
-function grafCombinado(){
+function grafCombinado(hasta){
+  /* hasta = último mes que entra. Lo usa el informe de cierre, que no tiene que
+     mostrar lo que pasó después del mes que se está informando. Sin el parámetro
+     entra el año completo, que es como lo mira el tablero todos los días. */
+  hasta=hasta||12;
   const c=C();
   const ventas=new Array(12).fill(0), base=new Array(12).fill(0), conAcc=new Array(12).fill(0);
   ENT.forEach(r=>{ if(+r.f.slice(0,4)!==ANIO)return; const m=+r.f.slice(5,7)-1;
+    if(m>=hasta)return;
     if(CANAL_BASE.includes(r.canal)){base[m]++; } if(r.acc)conAcc[m]++; });
-  if(CMV.length) CMV.filter(x=>x.f&&+String(x.f).slice(0,4)===ANIO).forEach(x=>ventas[+x.f.slice(5,7)-1]++);
-  else JAV.filter(x=>x.comprado===1&&x.fac&&+x.fac.slice(0,4)===ANIO).forEach(x=>ventas[+x.fac.slice(5,7)-1]++);
+  if(CMV.length) CMV.filter(x=>x.f&&+String(x.f).slice(0,4)===ANIO&&+String(x.f).slice(5,7)<=hasta).forEach(x=>ventas[+x.f.slice(5,7)-1]++);
+  else JAV.filter(x=>x.comprado===1&&x.fac&&+x.fac.slice(0,4)===ANIO&&+x.fac.slice(5,7)<=hasta).forEach(x=>ventas[+x.fac.slice(5,7)-1]++);
   const tCm=base.map((b,i)=>b?Math.round(ventas[i]/b*100):null);
   const tAc=base.map((b,i)=>b?Math.round(conAcc[i]/b*100):null);
   /* La barra es la entrega total del mes (Venta Tradicional + Planes de Ahorro +
      V. Corporativa), partida en dos: la parte con contrato vendido y el resto.
      Las dos juntas suman la altura de la barra. */
-  const conCm=base.map((b,i)=>Math.min(ventas[i],b));
-  const sinCm=base.map((b,i)=>Math.max(b-ventas[i],0));
+  const conCm=base.map((b,i)=>i>=hasta?null:Math.min(ventas[i],b));
+  const sinCm=base.map((b,i)=>i>=hasta?null:Math.max(b-ventas[i],0));
   return chart({
     grid:{left:6,right:6,top:20,bottom:54,containLabel:true},
     textStyle:{fontFamily:"var(--body)",color:c.mute},
@@ -759,7 +764,14 @@ function cifrasMes(m,a){
     plata:plata, ticket:jav.length?plata/jav.length:0,
     cmEnt:enEnt, cmPost:Math.max(lista.length-enEnt,0),
     acc:acc, nOr:or.length, tickAcc:or.length?acc/or.length:0,
-    conAcc:conAcc, tasaAcc:ent.length?Math.round(conAcc/ent.length*100):0};
+    conAcc:conAcc, tasaAcc:ent.length?Math.round(conAcc/ent.length*100):0, futuro:false};
+}
+/* Un mes que todavía no entra en el informe. El informe de un mes cerrado se
+   corta ahí: si el 2 de octubre se informa septiembre, la entrega del día 1 de
+   octubre no tiene que aparecer en ningún gráfico ni en ningún acumulado. */
+function mesVacio(m,a){
+  return {m:m,a:a,nom:MESES[m-1],ent:0,cm:0,tasa:0,plata:0,ticket:0,cmEnt:0,cmPost:0,
+          acc:0,nOr:0,tickAcc:0,conAcc:0,tasaAcc:0,futuro:true};
 }
 
 /* Variación contra otro número, en una etiqueta corta */
@@ -804,7 +816,8 @@ function mixAcc(m,a){
 function datosCierre(m,a){
   const ant=mesAnterior(m,a), sig=mesSiguiente(m,a);
   const act=cifrasMes(m,a), pre=cifrasMes(ant.m,ant.a);
-  const anio=[]; for(let i=1;i<=12;i++) anio.push(cifrasMes(i,a));
+  /* El año se corta en el mes informado: lo que pasó después no es de este informe */
+  const anio=[]; for(let i=1;i<=12;i++) anio.push(i<=m?cifrasMes(i,a):mesVacio(i,a));
   const conDato=anio.filter(x=>x.ent>0);
   const entAnio=conDato.reduce((s,x)=>s+x.ent,0);
   const cmAnio=conDato.reduce((s,x)=>s+x.cm,0);
@@ -878,7 +891,7 @@ function svgAnio(D){
   D.anio.forEach((x,i)=>{ hz+=`<rect class="hz" data-i="${i}" x="${n(L+paso*i)}" y="${T}" width="${n(paso)}" height="${h}" fill="transparent"/>`; });
   const tips=D.anio.map(x=>x.ent
     ?`<b>${x.nom} ${x.a}</b><br>${x.ent} entregas<br>${x.cm} contratos · ${x.tasa}%<br>${x.conAcc} con accesorios · ${x.tasaAcc}%<br>${mill(x.acc)} en accesorios`
-    :`<b>${x.nom} ${x.a}</b><br>sin entregas`);
+    :`<b>${x.nom} ${x.a}</b><br>${x.futuro?"fuera del informe":"sin entregas"}`);
   return `<div class="gwrap">
     <div class="togs no-print">
       <button class="tog" data-s="tcm"><i style="background:#1b6fe0"></i>Tasa de contratos</button>
@@ -917,7 +930,7 @@ function svgAccAnio(D){
   });
   const tips=D.anio.map(x=>x.nOr
     ?`<b>${x.nom} ${x.a}</b><br>${mill(x.acc)} facturados<br>${x.nOr} OR · ticket ${pesos(x.tickAcc)}<br>${D.obj?Math.round(x.acc/D.obj*100)+"% del objetivo":""}`
-    :`<b>${x.nom} ${x.a}</b><br>sin facturación`);
+    :`<b>${x.nom} ${x.a}</b><br>${x.futuro?"fuera del informe":"sin facturación"}`);
   return `<div class="gwrap"><svg class="graf" viewBox="0 0 ${W} ${H}" data-tip="${attr(JSON.stringify(tips))}">${g}${hz}</svg></div>`;
 }
 
@@ -1082,13 +1095,13 @@ footer{padding:20px 30px;font-size:12.5px;color:var(--mute)}
 
 <section class="bloque">
   <h2><span class="num">3</span> Cómo venimos en el año</h2>
-  <p class="intro">Entregas mes a mes, partidas entre las que salieron con contrato y las que no, con las dos tasas superpuestas.</p>
+  <p class="intro">Entregas mes a mes hasta ${mes.toLowerCase()}, partidas entre las que salieron con contrato y las que no, con las dos tasas superpuestas. Lo posterior al mes informado no entra.</p>
   ${svgAnio(D)}
 
   <h3>Accesorios facturados mes a mes</h3>
   ${svgAccAnio(D)}
 
-  <h3>Acumulado ${a}</h3>
+  <h3>Acumulado ${a} · de enero a ${mes.toLowerCase()}</h3>
   <ul class="lista">
     <li><span>Entregas</span><b>${D.entAnio}</b></li>
     <li><span>Contratos vendidos</span><b>${D.cmAnio}</b></li>
@@ -1174,8 +1187,8 @@ function vCierre(){
   </div>
 
   <div class="card">
-    <h2>3 · Cómo venimos en el año <span>tocá la leyenda para prender o apagar cada línea</span></h2>
-    ${grafCombinado()}
+    <h2>3 · Cómo venimos en el año <span>hasta ${mes.toLowerCase()} · tocá la leyenda para prender o apagar cada línea</span></h2>
+    ${grafCombinado(MES)}
     <div class="fila" style="margin-top:14px"><span>Entregas acumuladas</span><b>${D.entAnio}</b><span></span></div>
     <div class="fila"><span>Contratos acumulados<small>tasa del año ${D.tasaAnio}%</small></span><b style="color:${D.tasaAnio>=30?"var(--ok)":"var(--bad)"}">${D.cmAnio}</b><span></span></div>
     <div class="fila"><span>Accesorios acumulados<small>promedio ${mill(D.prom.acc)} por mes, sobre ${D.meses} ${D.meses===1?"mes":"meses"}</small></span><b>${mill(D.accAnio)}</b><span></span></div>
