@@ -7,40 +7,89 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+/* ═══════════════════════════════════════════════════════════════════════
+   CAPA UI / PRESENTACIÓN — NO ALTERA DATOS NI CONEXIONES
+   Los nombres de clase son los mismos de siempre (.card, .meta, .fila,
+   .ech, .pill, .tw…), así que las vistas siguen armando el mismo HTML.
+   Lo único que cambia es cómo se ve.
+   ═══════════════════════════════════════════════════════════════════════ */
 :root{
-  --ink:#0b1f3a;--ink2:#3d5170;--mute:#7b8aa0;--line:#dfe4ec;--paper:#f4f2ec;--card:#fff;
-  --vw:#001e50;--acc:#1b6fe0;--ok:#1f8a5b;--warn:#c9861a;--bad:#c23b3b;
+  --ink:#0b1f3a;--ink2:#46597a;--mute:#8094ad;--line:#e3e9f0;
+  --paper:#eef2f7;--card:#fff;--soft:#f6f9fc;
+  --vw:#001e50;--acc:#0f6fdc;--ok:#1f8a5b;--warn:#c9861a;--bad:#c23b3b;
+  --rail:#0b2347;--rail2:#102e59;--railtx:#aebfd8;
+  --sombra:0 1px 2px rgba(11,31,58,.05),0 8px 24px rgba(11,31,58,.06);
   --disp:'VW Head','Barlow Condensed','Arial Narrow',sans-serif;
   --body:'VW Text Office','Barlow','Segoe UI',Arial,sans-serif;
+  --rail-w:216px;
 }
-:root[data-tema="oscuro"]{--ink:#f2f7ff;--ink2:#cbd9ef;--mute:#a3b6d2;--line:#24395c;--paper:#0a1526;--card:#132540;--vw:#4f9bff;--acc:#5aa7ff;--ok:#2fbd7e;--warn:#e0a63c;--bad:#ff6b6b}
+:root[data-tema="oscuro"]{
+  --ink:#f2f7ff;--ink2:#cbd9ef;--mute:#a3b6d2;--line:#24395c;
+  --paper:#08121f;--card:#132540;--soft:#16283f;
+  --vw:#4f9bff;--acc:#5aa7ff;--ok:#2fbd7e;--warn:#e0a63c;--bad:#ff6b6b;
+  --rail:#071529;--rail2:#102votre;--railtx:#9db2d2;
+  --sombra:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+}
+:root[data-tema="oscuro"]{--rail2:#132e55}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
-.wrap{max-width:900px;margin:0 auto;padding:18px 16px 60px}
+html,body{overflow-x:hidden}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased}
 
-/* Acceso */
-.login{position:fixed;inset:0;background:linear-gradient(135deg,#001e50,#0b2d63);display:flex;align-items:center;justify-content:center;z-index:99;padding:20px}
-.login.hidden{display:none}
-.lbox{background:var(--card);border-radius:16px;padding:32px 26px;width:min(340px,100%);text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.35)}
-.lbox h1{font-family:var(--disp);font-size:30px;color:var(--vw);line-height:1.05;margin-top:6px}
-.lbox input{width:100%;margin-top:20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit;text-align:center;color:var(--ink);outline:none}
-.lbox .btn{width:100%;margin-top:10px}
-.err{min-height:18px;margin-top:10px;font-size:12px;font-weight:600;color:var(--bad)}
+/* ── Armazón: barra lateral + contenido ───────────────────────────── */
+.app{display:grid;grid-template-columns:var(--rail-w) minmax(0,1fr);min-height:100vh}
+.rail{background:linear-gradient(180deg,var(--rail) 0%,var(--rail2) 100%);color:#fff;
+  display:flex;flex-direction:column;gap:4px;padding:20px 14px 16px;position:sticky;top:0;height:100vh}
+.rail .marca{font-size:10px;letter-spacing:.09em;font-weight:700;color:#7e9cc4;text-transform:uppercase}
+.rail .nom{font-family:var(--disp);font-weight:700;font-size:25px;line-height:1.02;margin:6px 0 22px;color:#fff}
+.tabs{display:flex;flex-direction:column;gap:3px}
+.tabs button{all:unset;display:flex;align-items:center;gap:11px;cursor:pointer;
+  padding:11px 13px;border-radius:11px;font-weight:600;font-size:15px;color:var(--railtx);
+  transition:background .15s,color .15s}
+.tabs button i{font-style:normal;width:21px;text-align:center;font-size:16px;opacity:.9}
+.tabs button:hover{background:rgba(255,255,255,.07);color:#fff}
+.tabs button.on{background:var(--acc);color:#fff;box-shadow:0 6px 16px rgba(15,111,220,.3)}
+.tabs button.on i{opacity:1}
+.railpie{margin-top:auto;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);
+  font-size:11px;color:#7389a8;line-height:1.45}
 
-/* Cabecera */
-.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
-.top h1{font-family:var(--disp);font-weight:700;font-size:28px;color:var(--vw);line-height:1}
-.top .sub{font-size:13px;color:var(--mute)}
-.btn{font:inherit;font-size:14px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer}
+.main{min-width:0;padding:20px 24px 56px;max-width:1320px}
+
+/* ── Cabecera ─────────────────────────────────────────────────────── */
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.top .ojo{font-size:10.5px;letter-spacing:.09em;font-weight:700;color:var(--acc);text-transform:uppercase}
+.top h1{font-family:var(--disp);font-weight:700;font-size:30px;color:var(--vw);line-height:1.05;margin-top:2px}
+.top .sub{font-size:13px;color:var(--mute);margin-top:3px}
+.acciones{display:flex;gap:7px;flex-wrap:wrap}
+.btn{font:inherit;font-size:13.5px;font-weight:600;border:1px solid var(--line);background:var(--card);
+  color:var(--ink);border-radius:10px;padding:9px 13px;cursor:pointer;box-shadow:0 1px 2px rgba(11,31,58,.04);
+  transition:border-color .15s,transform .05s}
+.btn:hover{border-color:var(--acc)}
+.btn:active{transform:translateY(1px)}
 .btn.pri{background:var(--vw);border-color:var(--vw);color:#fff}
-.tabs{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:16px}
-.tabs button{all:unset;flex:1;text-align:center;cursor:pointer;padding:10px;border-radius:9px;font-weight:600;color:var(--ink2);font-size:15px}
-.tabs button.on{background:var(--vw);color:#fff}
-:root[data-tema="oscuro"] .tabs button.on{background:var(--acc);color:#04101f}
+:root[data-tema="oscuro"] .btn.pri{background:var(--acc);border-color:var(--acc);color:#04101f}
 
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
-.card h2{font-family:var(--disp);font-weight:700;font-size:19px;color:var(--vw);margin-bottom:12px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+/* ── Indicadores de arriba ────────────────────────────────────────── */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:15px 17px;box-shadow:var(--sombra);
+  display:flex;flex-direction:column;gap:3px;min-width:0}
+.kpi .et{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.045em;
+  color:var(--mute);text-transform:uppercase}
+.kpi .et i{font-style:normal;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+  font-size:13px;background:rgba(15,111,220,.1);color:var(--acc);flex:none}
+.kpi .v{font-family:var(--disp);font-weight:700;font-size:35px;line-height:1.05;margin-top:5px;color:var(--vw)}
+.kpi .d{font-size:12.5px;color:var(--ink2)}
+.kpi .barra{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:8px}
+.kpi .barra i{display:block;height:100%;border-radius:99px}
+
+/* ── Tarjetas ─────────────────────────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:17px 19px;
+  margin-bottom:14px;box-shadow:var(--sombra)}
+.card h2{font-family:var(--disp);font-weight:700;font-size:19px;color:var(--vw);margin-bottom:13px;
+  display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .card h2 span{font-family:var(--body);font-weight:400;font-size:12px;color:var(--mute)}
+.par{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.par>.card{margin-bottom:0}
 
 /* Meta grande */
 .meta{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
@@ -48,36 +97,97 @@ body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:
 .meta .n{font-family:var(--disp);font-weight:700;font-size:46px;line-height:1}
 .meta .t{font-size:14px;color:var(--ink2);margin-top:2px}
 .meta .f{font-size:15px;font-weight:600;margin-top:6px}
-.fila{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;background:var(--paper);border-radius:10px;padding:10px 12px;margin-top:8px}
-:root[data-tema="oscuro"] .fila{background:#16283f}
+.fila{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;background:var(--soft);
+  border:1px solid var(--line);border-radius:11px;padding:10px 13px;margin-top:8px}
 .fila b{font-family:var(--disp);font-size:24px;color:var(--vw);line-height:1}
 .fila small{display:block;font-size:11px;color:var(--mute)}
 .ech{width:100%;min-width:0}
 table{width:100%;border-collapse:collapse;font-size:14px}
-th{text-align:left;font-size:12px;font-weight:600;color:var(--ink2);border-bottom:2px solid var(--line);padding:6px 8px;white-space:nowrap}
+th{text-align:left;font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+  color:var(--mute);border-bottom:1px solid var(--line);padding:8px;white-space:nowrap;
+  position:sticky;top:0;background:var(--card);z-index:1}
 td{border-bottom:1px solid var(--line);padding:9px 8px}
-.r{text-align:right}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td,table tr:hover td{background:var(--soft)}
+.r{text-align:right;font-variant-numeric:tabular-nums}
 .pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
 .p-ok{background:rgba(31,138,91,.14);color:var(--ok)}.p-w{background:rgba(201,134,26,.14);color:var(--warn)}
 .p-b{background:rgba(194,59,59,.14);color:var(--bad)}.p-n{background:rgba(123,138,160,.14);color:var(--ink2)}
-.tw{overflow:auto;max-height:70vh}
+.tw{overflow:auto;max-height:70vh;border-radius:10px}
 .vacio{color:var(--mute);font-size:14px;padding:10px 0}
-.sub{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.mesnav{border:1px solid var(--line);background:var(--fondo);color:var(--ink);
-  border-radius:8px;width:26px;height:26px;line-height:1;font-size:16px;cursor:pointer;padding:0}
-.mesnav:disabled{opacity:.3;cursor:default}
-.sub b{font-size:14px;color:var(--ink)}
-.sub .hoy{color:var(--acc);font-size:13px;text-decoration:none}
-.sub .gen{color:var(--mute);font-size:13px}
-.fila.click{cursor:pointer;transition:background .12s,box-shadow .12s}
-.fila.click:hover{box-shadow:inset 0 0 0 1px var(--acc)}
-.fila.sel{box-shadow:inset 0 0 0 2px var(--acc)}
-.fila.sel small{color:var(--acc)}
-.rk div{display:flex;justify-content:space-between;border-bottom:1px dotted var(--line);padding:6px 0}
+.rk div{display:flex;justify-content:space-between;border-bottom:1px dotted var(--line);padding:7px 0}
+.rk div:last-child{border-bottom:0}
 .rk em{font-style:normal;color:var(--mute);width:24px;display:inline-block}
-footer{color:var(--mute);font-size:12px;text-align:center;margin-top:20px}
-@media(max-width:520px){.meta .n{font-size:38px}.top h1{font-size:23px}}
-@media print{.tabs,.top .btn,.login{display:none!important}}
+footer{color:var(--mute);font-size:12px;text-align:center;margin-top:22px}
+
+/* ── Acceso ───────────────────────────────────────────────────────── */
+.login{position:fixed;inset:0;background:linear-gradient(135deg,#001e50,#0b2d63 60%,#124a8f);
+  display:flex;align-items:center;justify-content:center;z-index:99;padding:20px}
+.login.hidden{display:none}
+.lbox{background:#fff;border-radius:18px;padding:34px 28px;width:min(350px,100%);text-align:center;
+  box-shadow:0 28px 70px rgba(0,0,0,.4)}
+.lbox h1{font-family:var(--disp);font-size:31px;color:#001e50;line-height:1.05;margin-top:6px}
+.lbox input{width:100%;margin-top:20px;background:#f3f6fa;border:1px solid #dde4ed;border-radius:11px;
+  padding:13px;font:inherit;text-align:center;color:#0b1f3a;outline:none}
+.lbox input:focus{border-color:#0f6fdc;box-shadow:0 0 0 3px rgba(15,111,220,.14)}
+.lbox .btn{width:100%;margin-top:10px;background:#001e50;border-color:#001e50;color:#fff}
+.err{min-height:18px;margin-top:10px;font-size:12px;font-weight:600;color:#c23b3b}
+
+/* ── Barra móvil + cajón lateral ──────────────────────────────────── */
+#chkNav{position:absolute;opacity:0;pointer-events:none}
+.barramovil,.fondonav{display:none}
+
+@media(max-width:1180px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:980px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .rail{position:fixed;top:0;left:0;bottom:0;width:272px;height:100dvh;z-index:60;
+    transform:translateX(-100%);transition:transform .22s ease;box-shadow:16px 0 40px rgba(0,0,0,.28)}
+  #chkNav:checked~.app .rail{transform:none}
+  #chkNav:checked~.fondonav{display:block;position:fixed;inset:0;background:rgba(6,22,46,.45);z-index:55}
+  .barramovil{display:flex;align-items:center;gap:11px;position:sticky;top:0;z-index:40;
+    padding:9px 13px;background:var(--card);border-bottom:1px solid var(--line);
+    box-shadow:0 4px 16px rgba(11,31,58,.07)}
+  .barramovil label{display:grid;place-items:center;width:40px;height:40px;border-radius:11px;flex:none;
+    border:1px solid var(--line);background:var(--card);color:var(--vw);font-size:17px;cursor:pointer}
+  .barramovil .q{font-family:var(--disp);font-weight:700;font-size:19px;color:var(--vw);line-height:1.1;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .main{padding:14px 13px 48px}
+  .top h1{font-size:24px}
+  .par{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:620px){
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .kpi{padding:12px 13px;border-radius:13px}
+  .kpi .v{font-size:27px}
+  .card{padding:14px 15px;border-radius:13px}
+  .meta .n{font-size:38px}
+  .meta .aro{width:78px;height:78px}
+  .acciones .btn{font-size:12.5px;padding:8px 11px}
+}
+@media(max-width:380px){.kpis{grid-template-columns:minmax(0,1fr)}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ── Impresión: siempre claro, sin controles, solo la vista actual ── */
+@page{size:A4 landscape;margin:7mm}
+@media print{
+  html,body{background:#fff!important;color:#0b1f3a!important;overflow:visible!important}
+  body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .rail,.barramovil,.fondonav,.acciones,.login,#chkNav{display:none!important}
+  .app{display:block!important}
+  .main{padding:0!important;max-width:none!important}
+  .top{margin-bottom:4mm!important;border-bottom:1px solid #d9e1ea;padding-bottom:3mm}
+  .top h1{color:#001e50!important;font-size:19pt!important}
+  .card,.kpi{background:#fff!important;border:1px solid #d9e1ea!important;box-shadow:none!important;
+    break-inside:avoid!important;page-break-inside:avoid!important}
+  .card{margin-bottom:3mm!important;padding:3mm 4mm!important}
+  .kpis{gap:3mm!important;margin-bottom:3mm!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  .fila{background:#f6f9fc!important;border-color:#e3e9f0!important}
+  .ech,.ech svg{background:#fff!important}
+  .ech svg text{fill:#334155!important}
+  th{background:#fff!important;color:#46597a!important}
+  .tw{max-height:none!important;overflow:visible!important}
+  footer{display:none}
+}
 </style>
 </head>
 <body>
@@ -93,26 +203,49 @@ footer{color:var(--mute);font-size:12px;text-align:center;margin-top:20px}
   </div>
 </div>
 
-<div class="wrap">
-  <div class="top">
-    <div><h1 id="titulo">Mis ventas</h1><div class="sub" id="periodo"></div></div>
-    <div style="display:flex;gap:6px">
-      <button class="btn" onclick="cambiarTema()" id="btnTema">🌙</button>
-      <button class="btn" onclick="cargar(1)">↻</button>
-      <button class="btn pri" onclick="window.print()">🖨</button>
+<!-- CAPA UI / PRESENTACIÓN — NO ALTERA DATOS NI CONEXIONES.
+     El contenedor de la navegación conserva id="tabs" y los data-v de siempre,
+     así que el JavaScript que cambia de vista sigue siendo exactamente el mismo. -->
+<input type="checkbox" id="chkNav" aria-label="Abrir el menú">
+
+<div class="app">
+  <aside class="rail">
+    <div class="marca">Autosol Jujuy · Volkswagen</div>
+    <div class="nom">Mis<br>ventas</div>
+    <nav class="tabs" id="tabs">
+      <button data-v="hoy" class="on"><i>◉</i>Hoy</button>
+      <button data-v="contratos"><i>▤</i>Contratos</button>
+      <button data-v="accesorios"><i>✦</i>Accesorios</button>
+    </nav>
+    <div class="railpie">Contratos de mantenimiento<br>y accesorios 0 km</div>
+  </aside>
+
+  <div>
+    <div class="barramovil">
+      <label for="chkNav">☰</label>
+      <div class="q">Mis ventas</div>
     </div>
-  </div>
 
-  <div class="tabs" id="tabs">
-    <button data-v="hoy" class="on">Hoy</button>
-    <button data-v="contratos">Contratos</button>
-    <button data-v="accesorios">Accesorios</button>
-    <button data-v="cierre">Cierre</button>
-  </div>
+    <main class="main">
+      <div class="top">
+        <div>
+          <div class="ojo">Contratos y accesorios</div>
+          <h1 id="titulo">Mis ventas</h1>
+          <div class="sub" id="periodo"></div>
+        </div>
+        <div class="acciones">
+          <button class="btn" onclick="cambiarTema()" id="btnTema">🌙</button>
+          <button class="btn" onclick="cargar(1)">↻ Actualizar</button>
+          <button class="btn pri" onclick="window.print()">🖨 Imprimir</button>
+        </div>
+      </div>
 
-  <div id="cuerpo"></div>
-  <footer id="pie"></footer>
+      <div id="cuerpo"></div>
+      <footer id="pie"></footer>
+    </main>
+  </div>
 </div>
+<label class="fondonav" for="chkNav" aria-hidden="true"></label>
 
 <script>/* ECharts 6.1.0 — MIT */
 
@@ -175,93 +308,22 @@ const mill=n=>"$ "+(n/1e6).toLocaleString("es-AR",{minimumFractionDigits:1,maxim
 const pesos=n=>"$ "+fmt(n);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const tit=s=>String(s).toLowerCase().replace(/(^|[\s.\/(])\S/g,m=>m.toUpperCase());
-
-/* ── NOMBRES DE ACCESORIOS ──────────────────────────────────────────────
-   Los accesorios se escriben a mano en cada OR, así que del mismo producto
-   llegan diez formas distintas: "LONA SOFT", "Lona maritima", "lona amarok
-   v6", y encima con erratas ("Estrobos Off Roods", "Matafuegoc").
-
-   Acá se agrupan por lo que son, no por cómo se escribieron. Cada renglón es
-   el nombre que se muestra y el texto que tiene que encontrar adentro.
-   Se revisan en orden y gana el primero, por eso los estribos off road van
-   antes que los estribos a secas.
-
-   Para agregar un accesorio nuevo: sumá un renglón con su nombre y una
-   palabra que lo identifique. Lo que no entra en ninguna regla se muestra
-   tal cual vino, así siempre se ve lo que falta clasificar. */
-const ACC_REGLAS = [
-  /* La vocal del medio va opcional: llegan escritos "estribos", "estrobos" y "estrbos" */
-  ["Estribos off road",           /estr[oi]?b.*(off|of)\s*ro|(off|of)\s*ro.*estr[oi]?b/],
-  /* Planos y a secas van juntos: lo único que se separa son los off road */
-  ["Estribos",                    /estr[oi]?b/],
-  ["Tapa rígida",                 /tapa/],
-  ["Lona",                        /lona/],
-  ["Cobertor",                    /c[ou]bertor/],
-  ["Chapón",                      /chapon/],
-  ["Matafuego",                   /mata\s*fueg/],
-  ["Sensores de estacionamiento", /sensor|sesnor/],
-  ["Deflectores de ventanillas",  /def\w*tor/],
-  ["Tuercas de seguridad",        /tuerca/],
-  ["Kit de seguridad",            /kit.*seg|seg.*kit/],
-  ["Alarma",                      /alarma/],
-  ["Cámara",                      /camara/],
-  ["Alfombras",                   /alfombra/],
-  ["Barras de techo",             /barra/],
-  ["Enganche de remolque",        /enganche|remolque/],
-  ["Polarizado",                  /polariz/],
-  ["Roll bar",                    /roll\s*bar|antivuelco/],
-  ["Cubre volante",               /cubre\s*volante/]
-];
-/* Deja el texto comparable: sin mayúsculas, sin acentos, sin signos ni espacios de más */
-function llaveAcc(s){
-  return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
-}
-function canonAcc(s){
-  const k = llaveAcc(s);
-  for (let i = 0; i < ACC_REGLAS.length; i++) if (ACC_REGLAS[i][1].test(k)) return ACC_REGLAS[i][0];
-  return tit(s);
-}
 const fdia=d=>d?d.split("-").reverse().join("/"):"—";
 const HOY=new Date(); HOY.setHours(0,0,0,0);
 const dDesde=d=>d?Math.floor((HOY-new Date(d+"T00:00:00"))/864e5):null;
 
-let JAV=[],ACP=[],ACC=[],ACV=[],CMV=[],ENT=[],MES,ANIO;
+let JAV=[],ACP=[],ACC=[],ACV=[],ENT=[],MES,ANIO;
 let ACC_POR_VIN={}, OR_DE_ENTREGA={}, ENTREGA_POR_VIN={};
-let CM_POR_VIN={}, SERV_POR_VIN={}, MOTIVO_POR_VIN={};
-let vistaCm="", vistaAcc="";   /* filtro activo al tocar un recuadro */
-let rkAnio=0;                  /* ranking de accesorios: 0 = mes · 1 = todo el año */
-let saltoCierre=0;             /* 1 = al mes lo movió la pestaña Cierre, no la persona */
-let MES_HOY, ANIO_HOY, MES_MIN=1, ANIO_MIN=2025;   /* límites para moverse entre meses */
 const CANAL_BASE=["VENTA TRADICIONAL","PLANES DE AHORRO","V. CORPORATIVA"];
 const enMes=d=>d&&+d.slice(0,4)===ANIO&&+d.slice(5,7)===MES;
 
 function preparar(){
   JAV=(DATA.javier||[]).map(r=>({ent:r[0],fac:r[1],comprado:r[2],precio:r[3],motivo:(r[4]||"").trim(),mom:r[5],vin:r[6],mod:r[7]||"Sin dato"}));
-  /* Lo que dijo el cliente, para las entregas que Javier ya cargó en su planilla */
-  MOTIVO_POR_VIN={};
-  JAV.forEach(x=>{ if(x.vin&&x.motivo)MOTIVO_POR_VIN[String(x.vin).slice(-8)]=x.motivo });
   ACP=(DATA.accPesos||[]).map(r=>({f:r[0],t:r[1],or:r[2]||"",vin:r[3]||""}));
-  /* Contratos vendidos de todo el año, por fecha de factura. La planilla de Javier
-     arranca en mayo 2026; los meses anteriores salen de la columna F. VENTA CM de
-     la hoja de entregas. El Apps Script ya los une en una sola serie. */
-  CMV=(DATA.cmv||[]).map(r=>({f:r[0],mom:r[1]}));
   /* Todas las OR de accesorios, las abra quien las abra: sirven para descartar
      al cliente que ya volvió y compró. */
   ACV=(DATA.accVin||[]).map(r=>({f:r[0],vin:r[1],or:r[2]||""}));
-
-  /* Contratos de mantenimiento ya vendidos, de todas las planillas y todos los
-     vendedores. Si el VIN está acá, el cliente ya tiene contrato. */
-  CM_POR_VIN={};
-  (DATA.cmVin||[]).forEach(r=>{
-    const d={cubre:r[1]||"",f:r[2]||null};
-    if(r[0])CM_POR_VIN[r[0]]=d;
-    if(r[3])CM_POR_VIN[r[3]]=d;        /* también por dominio */
-  });
-  /* Services hechos: hasta qué kilometraje llegó y si lo pagó o se lo cubrieron */
-  SERV_POR_VIN={};
-  (DATA.servVin||[]).forEach(r=>{ SERV_POR_VIN[r[0]]={km:+r[1]||0,pago:!!r[2],cub:!!r[3],f:r[4]||null} });
-  ACC=(DATA.acc||[]).map(r=>({f:r[0],items:(r[1]||[]).map(canonAcc)}));
+  ACC=(DATA.acc||[]).map(r=>({f:r[0],items:(r[1]||[]).map(tit)}));
   /* Lo que manda el Apps Script en ent:
      0 fecha · 1 canal · 2 familia · 3 vendedor · 4 C.M. · 5 accesorios 0/1
      6 fecha de recepción · 7 modelo completo · 8 interno / N° de OR */
@@ -275,15 +337,8 @@ function preparar(){
   ACC_POR_VIN={}; OR_DE_ENTREGA={}; ENTREGA_POR_VIN={};
   ACV.forEach(x=>{ if(!x.vin)return; (ACC_POR_VIN[x.vin]=ACC_POR_VIN[x.vin]||[]).push(x) });
   ENT.forEach(r=>{ if(r.accOr)OR_DE_ENTREGA[r.accOr]=r.f; if(r.vin)ENTREGA_POR_VIN[r.vin]=r.f });
-  /* El mes que se mira lo decide el calendario, no el dato más nuevo. Antes se
-     tomaba la fecha más alta de los datos, así que al cargar una entrega programada
-     para el mes que viene el tablero saltaba de mes solo, en blanco, y tapaba el
-     cierre del mes en curso. Con las flechas de arriba se mira cualquier mes. */
-  MES_HOY = HOY.getMonth() + 1; ANIO_HOY = HOY.getFullYear();
-  if (!MES) { MES = MES_HOY; ANIO = ANIO_HOY; }
-  /* Desde qué mes hay datos, para no dejar retroceder al vacío */
-  const pri=[...ENT.map(r=>r.f),...JAV.map(r=>r.fac).filter(Boolean)].sort().shift();
-  if(pri){ ANIO_MIN=+pri.slice(0,4); MES_MIN=+pri.slice(5,7); }
+  const ult=[...ENT.map(r=>r.f),...JAV.map(r=>r.fac).filter(Boolean)].sort().pop()||new Date().toISOString().slice(0,10);
+  ANIO=+ult.slice(0,4); MES=+ult.slice(5,7);
 }
 
 /* ═══ VENTANAS DE OPORTUNIDAD ═══
@@ -323,65 +378,12 @@ function prioridadAcc(d){
 }
 const ordenP=x=>({[P_ULT]:0,[P_AHORA]:1,[P_SEM]:2,[P_LUEGO]:3})[prioridad(x)];
 const pendientes=()=>JAV.filter(x=>x.comprado===0&&(dDesde(x.ent)||0)<=VENTANA_FIN&&!DESCARTE.test(x.motivo||""));
-/* ═══ OPORTUNIDADES DE CONTRATO ═══
-   Salen de la hoja de entregas, que tiene todo el historial. La planilla de Javier
-   aporta el motivo de no compra. Las planillas de CM dicen quién ya tiene contrato.
-
-   Camioneta: 10.000 el 1ro · 20.000 el 2do · 30.000 el 3ro
-   Auto:      15.000 el 1ro · 30.000 el 2do · 45.000 el 3ro
-   30.000 es ambiguo, por eso se mira el modelo. */
-const esCamioneta=m=>/amarok|saveiro/i.test(String(m||""));
-function nroServicio(km,mod){
-  if(!km)return 0;
-  if(esCamioneta(mod)) return km>=30000?3:km>=20000?2:km>=10000?1:0;
-  return km>=45000?3:km>=30000?2:km>=15000?1:0;
-}
-/* Estado de cada entrega frente al contrato */
-function estadoCm(r){
-  const d=dDesde(r.f)||0;
-  if(d<0) return null;                                  /* entrega programada, todavía no salió */
-  if(d>VENTANA_FIN) return null;                        /* se le pasó el año */
-  if(r.cm) return null;                                 /* salió con contrato desde la entrega */
-  if(r.vin&&CM_POR_VIN[r.vin]) return null;             /* ya lo compró, acá o en otro lado */
-  const sv=r.vin?SERV_POR_VIN[r.vin]:null;
-  if(sv&&sv.cub&&!sv.pago) return null;                 /* el service se lo cubrieron: tiene contrato */
-  const motivo=r.vin?(MOTIVO_POR_VIN[r.vin]||""):"";
-  if(DESCARTE.test(motivo)) return null;                /* el cliente cerró la puerta */
-  const n=sv?nroServicio(sv.km,r.mod):0;
-  return {
-    d:d, restan:restan(d), motivo:motivo,
-    vino:!!(sv&&sv.pago), servHecho:n, ultimoServ:sv?sv.f:null,
-    /* Lo que todavía le puede cubrir el contrato */
-    cubre: n>=3?0 : n===2?1 : 2
-  };
-}
-function prioridadCm(e){
-  if(e.d>=VENTANA_ULTIMO) return P_ULT;                 /* se le termina el año */
-  if(e.vino) return P_AHORA;                            /* vino al service y lo pagó: no tiene contrato */
-  if(/recordatorio|cierre de tarjeta|proximo mes|margen tarjeta/i.test(e.motivo))
-    return faltaCierre<=7?P_AHORA:P_SEM;
-  if(e.d>=45) return P_SEM;
-  return P_LUEGO;
-}
-const ordenCm=x=>({[P_ULT]:0,[P_AHORA]:1,[P_SEM]:2,[P_LUEGO]:3})[prioridadCm(x.e)];
-/* La lista completa, ordenada por lo que se vence primero */
-function oportCm(){
-  const out=[];
-  ENT.forEach(r=>{
-    if(!CANAL_BASE.includes(r.canal))return;
-    const e=estadoCm(r);
-    if(!e)return;
-    out.push({...r,e:e});
-  });
-  return out.sort((a,b)=>ordenCm(a)-ordenCm(b)||a.e.restan-b.e.restan);
-}
-
 /* Ya compró accesorios después de la entrega: no se lo vuelve a llamar.
    No importa quién abrió la OR — Mauro, Tatiana, Guantay, Pablo o Javier. */
 const yaVolvio=r=>!!(r.vin&&(ACC_POR_VIN[r.vin]||[]).some(x=>x.f>=r.f));
 /* Entregas sin accesorios, todavía dentro de la ventana y que no volvieron */
 const oportAcc=()=>ENT.filter(r=>CANAL_BASE.includes(r.canal)&&!r.acc&&
-    (dDesde(r.f)||0)>=0&&(dDesde(r.f)||0)<=VENTANA_FIN&&!yaVolvio(r))
+    (dDesde(r.f)||0)<=VENTANA_FIN&&!yaVolvio(r))
   .map(r=>({...r,d:dDesde(r.f)||0})).sort((a,b)=>
     ({[P_ULT]:0,[P_AHORA]:1,[P_SEM]:2,[P_LUEGO]:3})[prioridadAcc(a.d)]-
     ({[P_ULT]:0,[P_AHORA]:1,[P_SEM]:2,[P_LUEGO]:3})[prioridadAcc(b.d)]||a.d-b.d);
@@ -419,10 +421,9 @@ function barraMod(rows,campo,pct,leyenda){
 /* Accesorios del mes: colocados en la entrega vs recuperados después.
    Necesita que el Apps Script mande el N° de orden y el chasis de cada OR.
    Mientras no lleguen, todo cae en "sin clasificar" y la tarjeta lo avisa. */
-function cortesAcc(m,a){
-  m=m||MES; a=a||ANIO;
+function cortesAcc(){
   const r={ent:{n:0,m:0},post:{n:0,m:0},sin:{n:0,m:0},dias:[]};
-  ACP.filter(x=>+String(x.f).slice(0,4)===a&&+String(x.f).slice(5,7)===m).forEach(x=>{
+  ACP.filter(x=>enMes(x.f)).forEach(x=>{
     if(x.or&&OR_DE_ENTREGA[x.or]){ r.ent.n++; r.ent.m+=x.t; return }
     const fe=x.vin?ENTREGA_POR_VIN[x.vin]:null;
     if(fe&&x.f>=fe){
@@ -458,52 +459,33 @@ function aro(valor,color){
 }
 
 /* Barras + las dos tasas superpuestas, cada una se puede prender y apagar */
-function grafCombinado(hasta){
-  /* hasta = último mes que entra. Lo usa el informe de cierre, que no tiene que
-     mostrar lo que pasó después del mes que se está informando. Sin el parámetro
-     entra el año completo, que es como lo mira el tablero todos los días. */
-  hasta=hasta||12;
+function grafCombinado(){
   const c=C();
   const ventas=new Array(12).fill(0), base=new Array(12).fill(0), conAcc=new Array(12).fill(0);
   ENT.forEach(r=>{ if(+r.f.slice(0,4)!==ANIO)return; const m=+r.f.slice(5,7)-1;
-    if(m>=hasta)return;
     if(CANAL_BASE.includes(r.canal)){base[m]++; } if(r.acc)conAcc[m]++; });
-  if(CMV.length) CMV.filter(x=>x.f&&+String(x.f).slice(0,4)===ANIO&&+String(x.f).slice(5,7)<=hasta).forEach(x=>ventas[+x.f.slice(5,7)-1]++);
-  else JAV.filter(x=>x.comprado===1&&x.fac&&+x.fac.slice(0,4)===ANIO&&+x.fac.slice(5,7)<=hasta).forEach(x=>ventas[+x.fac.slice(5,7)-1]++);
+  JAV.filter(x=>x.comprado===1&&x.fac&&+x.fac.slice(0,4)===ANIO).forEach(x=>ventas[+x.fac.slice(5,7)-1]++);
   const tCm=base.map((b,i)=>b?Math.round(ventas[i]/b*100):null);
   const tAc=base.map((b,i)=>b?Math.round(conAcc[i]/b*100):null);
-  /* La barra es la entrega total del mes (Venta Tradicional + Planes de Ahorro +
-     V. Corporativa), partida en dos: la parte con contrato vendido y el resto.
-     Las dos juntas suman la altura de la barra. */
-  const conCm=base.map((b,i)=>i>=hasta?null:Math.min(ventas[i],b));
-  const sinCm=base.map((b,i)=>i>=hasta?null:Math.max(b-ventas[i],0));
   return chart({
-    grid:{left:6,right:6,top:20,bottom:54,containLabel:true},
+    grid:{left:6,right:6,top:20,bottom:36,containLabel:true},
     textStyle:{fontFamily:"var(--body)",color:c.mute},
     tooltip:{trigger:"axis",backgroundColor:c.fondo,borderColor:c.line,textStyle:{color:c.txt},
-      formatter:p=>{
-        const i=p[0].dataIndex;
-        let t=p[0].name+" · <b>"+base[i]+"</b> entregas<br>";
-        return t+p.map(x=>`${x.marker}${x.seriesName}: <b>${x.value===null?"—":(x.seriesType==="line"?x.value+"%":x.value)}</b>`).join("<br>");
-      }},
+      formatter:p=>p[0].name+"<br>"+p.map(x=>`${x.marker}${x.seriesName}: <b>${x.value===null?"—":(x.seriesType==="line"?x.value+"%":x.value)}</b>`).join("<br>")},
     legend:{bottom:0,icon:"roundRect",itemWidth:11,itemHeight:11,textStyle:{fontSize:12,color:c.mute},
-      selectedMode:"multiple",
       selected:{"Tasa contratos":true,"Tasa accesorios":true}},
     xAxis:{type:"category",data:MESES.map(m=>m.slice(0,3)),axisLine:{lineStyle:{color:c.line}},axisTick:{show:false},axisLabel:{color:c.mute,fontSize:11}},
     yAxis:[{type:"value",splitLine:{lineStyle:{color:c.split}},axisLabel:{color:c.mute,fontSize:11}},
            {type:"value",max:100,splitLine:{show:false},axisLabel:{color:c.mute,fontSize:11,formatter:v=>v+"%"}}],
     series:[
-      {name:"Con contrato",type:"bar",stack:"ent",data:conCm,barMaxWidth:30,
-        itemStyle:{color:c.vw}},
-      {name:"Sin contrato",type:"bar",stack:"ent",data:sinCm,barMaxWidth:30,
-        itemStyle:{color:oscuro()?"#2c4670":"#c9d8f0",borderRadius:[4,4,0,0]}},
+      {name:"Contratos vendidos",type:"bar",data:ventas,barMaxWidth:26,itemStyle:{color:c.vw,borderRadius:[4,4,0,0]}},
       {name:"Tasa contratos",type:"line",yAxisIndex:1,data:tCm,smooth:true,symbolSize:7,connectNulls:true,
         lineStyle:{width:3,color:c.acc},itemStyle:{color:c.acc},
-        markLine:{silent:true,symbol:"none",data:[{yAxis:30,label:{formatter:"Meta 30%",position:"insideEndTop",fontSize:11,color:"#c23b3b"},lineStyle:{type:"dashed",color:"#c23b3b"}}]}},
+        markLine:{silent:true,symbol:"none",data:[{yAxis:30,label:{formatter:"Meta 30%",fontSize:11,color:"#c23b3b"},lineStyle:{type:"dashed",color:"#c23b3b"}}]}},
       {name:"Tasa accesorios",type:"line",yAxisIndex:1,data:tAc,smooth:true,symbolSize:7,connectNulls:true,
         lineStyle:{width:3,color:"#1f8a5b"},itemStyle:{color:"#1f8a5b"}}
     ]
-  },330);
+  },300);
 }
 
 /* Racha: los días del mes en que vendiste algo */
@@ -555,27 +537,47 @@ function vHoy(){
   const colPA=objAcc&&pAcc>=objAcc?"var(--ok)":"var(--bad)";
   const orFaltan=tickAcc?Math.ceil(faltanAcc/tickAcc):0;
 
-  const pend=oportCm();
-  const urgentes=pend.filter(x=>[P_ULT,P_AHORA].includes(prioridadCm(x.e)));
+  const pend=pendientes();
+  const urgentes=pend.filter(x=>[P_ULT,P_AHORA].includes(prioridad(x)))
+    .sort((a,b)=>ordenP(a)-ordenP(b)||(dDesde(b.ent)||0)-(dDesde(a.ent)||0));
   const accUrg=oportAcc().filter(x=>[P_ULT,P_AHORA].includes(prioridadAcc(x.d)));
 
+  /* Fila de indicadores. No calcula nada nuevo: muestra en grande los mismos
+     valores que ya están arriba, para que de un vistazo se vea cómo viene el mes. */
+  const llamar = urgentes.length + accUrg.length;
+  const kpi = (ic,et,v,d,pct,col) => `<div class="kpi">
+    <div class="et"><i>${ic}</i>${et}</div>
+    <div class="v"${col?` style="color:${col}"`:""}>${v}</div>
+    <div class="d">${d}</div>
+    ${pct===null?"":`<div class="barra"><i style="width:${Math.max(2,Math.min(100,pct))}%;background:${col||"var(--acc)"}"></i></div>`}
+  </div>`;
+
   return `
-  <div class="card">
-    <h2>Contratos de ${MESES[MES-1].toLowerCase()} <span>meta 30% de las entregas</span></h2>
-    <div class="meta">${aro(tCm,colCm)}
-      <div><div class="n" style="color:${colCm}">${tCm}%</div>
-        <div class="t">${vendidos.length} vendidos sobre ${base} entregas</div>
-        <div class="f" style="color:${faltanCm?"var(--bad)":"var(--ok)"}">${faltanCm?`Te faltan ${faltanCm} contratos para la meta`:"Meta alcanzada 👏"}</div></div>
-    </div>
-    <div class="fila"><span>Facturado en contratos<small>ticket promedio ${pesos(ticket)}</small></span><b>${pesos(plata)}</b><span></span></div>
+  <div class="kpis">
+    ${kpi("%","Tasa de contratos",tCm+"%",`${vendidos.length} de ${base} entregas · meta 30%`,Math.round(tCm/30*100),colCm)}
+    ${kpi("$","Facturado en contratos",pesos(plata),vendidos.length?`ticket promedio ${pesos(ticket)}`:"sin contratos en el mes",null,null)}
+    ${kpi("✦","Accesorios",mill(accM),objAcc?`${cumplAcc}% del objetivo de ${mill(objAcc)}`:`${orMes.length} OR · objetivo sin cargar`,objAcc?cumplAcc:null,colAcc)}
+    ${kpi("☎","Para llamar hoy",llamar,llamar?`${urgentes.length} contratos · ${accUrg.length} accesorios`:"nada urgente por ahora",null,llamar?"var(--warn)":"var(--ok)")}
   </div>
 
-  <div class="card">
-    <h2>Accesorios de ${MESES[MES-1].toLowerCase()} <span>objetivo ${objAcc?mill(objAcc):"sin cargar"}</span></h2>
-    <div class="meta">${aro(cumplAcc,colAcc)}
-      <div><div class="n" style="color:${colAcc}">${cumplAcc}%</div>
-        <div class="t">${mill(accM)} facturados en ${orMes.length} OR</div>
-        <div class="f" style="color:${faltanAcc?"var(--bad)":"var(--ok)"}">${faltanAcc?`Te faltan ${mill(faltanAcc)}`:"Objetivo alcanzado 👏"}</div></div>
+  <div class="par" style="margin-bottom:14px">
+    <div class="card">
+      <h2>Contratos de ${MESES[MES-1].toLowerCase()} <span>meta 30%</span></h2>
+      <div class="meta">${aro(tCm,colCm)}
+        <div><div class="n" style="color:${colCm}">${tCm}%</div>
+          <div class="t">${vendidos.length} vendidos sobre ${base} entregas</div>
+          <div class="f" style="color:${faltanCm?"var(--bad)":"var(--ok)"}">${faltanCm?`Te faltan ${faltanCm} contratos para la meta`:"Meta alcanzada 👏"}</div></div>
+      </div>
+      <div class="fila"><span>Facturado<small>ticket promedio ${pesos(ticket)}</small></span><b>${pesos(plata)}</b><span></span></div>
+    </div>
+
+    <div class="card">
+      <h2>Accesorios de ${MESES[MES-1].toLowerCase()} <span>objetivo ${objAcc?mill(objAcc):"sin cargar"}</span></h2>
+      <div class="meta">${aro(cumplAcc,colAcc)}
+        <div><div class="n" style="color:${colAcc}">${cumplAcc}%</div>
+          <div class="t">${mill(accM)} facturados en ${orMes.length} OR</div>
+          <div class="f" style="color:${faltanAcc?"var(--bad)":"var(--ok)"}">${faltanAcc?`Te faltan ${mill(faltanAcc)}`:"Objetivo alcanzado 👏"}</div></div>
+      </div>
     </div>
   </div>
 
@@ -591,11 +593,17 @@ function vHoy(){
     </p>`:`<p style="margin-top:10px;font-size:14px;color:var(--ok)"><b>Vas arriba de los dos objetivos 👏</b></p>`}
   </div>
 
-  ${(urgentes.length||accUrg.length)?`<div class="card">
-    <h2>Para llamar</h2>
-    <div class="fila"><span>Contratos<small>${urgentes.length?"🔥 por cumplir el año y 📞 para llamar ahora":"nada urgente por ahora"}</small></span><b style="color:${urgentes.length?"var(--ok)":"var(--mute)"}">${urgentes.length}</b><span></span></div>
-    <div class="fila"><span>Accesorios<small>${accUrg.length?"entregas sin accesorios, dentro de la ventana":"nada urgente por ahora"}</small></span><b style="color:${accUrg.length?"var(--acc)":"var(--mute)"}">${accUrg.length}</b><span></span></div>
-    <p style="margin:10px 0 0;font-size:13px;color:var(--mute)">El detalle de cada uno está en las pestañas Contratos y Accesorios.</p>
+  ${urgentes.length?`<div class="card" style="border-left:4px solid var(--ok)">
+    <h2>📞 Contratos: empezá por estos <span>${urgentes.length} de ${pend.length} pendientes</span></h2>
+    <p style="font-size:13px;color:var(--ink2);margin-bottom:8px">🔥 son los que están por cumplir el año — después ya no se puede ofrecer. Próximo cierre de tarjeta: ${fdia(CIERRE.toISOString().slice(0,10))}.</p>
+    ${tabla(urgentes.slice(0,8))}
+    <p style="margin-top:8px;font-size:13px;color:var(--mute)">La lista completa está en la pestaña Contratos.</p>
+  </div>`:`<div class="card"><h2>📞 Contratos</h2><div class="vacio">Nada urgente por ahora.</div></div>`}
+
+  ${accUrg.length?`<div class="card" style="border-left:4px solid var(--acc)">
+    <h2>🔧 Accesorios: oportunidades <span>${accUrg.length} entregas sin accesorios</span></h2>
+    ${tablaAcc(accUrg.slice(0,8))}
+    <p style="margin-top:8px;font-size:13px;color:var(--mute)">La lista completa está en la pestaña Accesorios.</p>
   </div>`:""}
 
   ${racha()}
@@ -603,27 +611,14 @@ function vHoy(){
   <div class="card"><h2>Cómo venís en el año <span>tocá la leyenda para prender o apagar cada línea</span></h2>${grafCombinado()}</div>`;
 }
 
-/* Qué hay que hacer con cada uno, en una frase */
-function queHacer(e){
-  if(e.vino){
-    const n=e.servHecho;
-    if(e.cubre===0) return "Ya hizo los tres services · no queda nada por cubrir";
-    return `Pagó el service ${n===1?"de los 10/15.000":n===2?"2do":"3ro"} · le quedan ${e.cubre} por cubrir`;
-  }
-  if(e.motivo) return tit(e.motivo);
-  if(e.d>=VENTANA_ULTIMO) return "Verificar en el sistema de VW antes de llamar";
-  return "Sin contacto registrado";
-}
 function tabla(arr){
-  if(!arr.length)return '<div class="vacio">Nada para llamar con este filtro.</div>';
-  return `<div class="tw"><table><tr><th></th><th>Entregada</th><th class="r">Le quedan</th><th>Interno</th><th>Modelo y qué hacer</th></tr>
-  ${arr.map(x=>{const e=x.e, p=prioridadCm(e), q=e.restan;
+  if(!arr.length)return '<div class="vacio">Sin clientes pendientes.</div>';
+  return `<div class="tw"><table><tr><th></th><th>Entregada</th><th class="r">Le quedan</th><th>VIN</th><th>Modelo</th><th>Qué dijo</th></tr>
+  ${arr.map(x=>{const p=prioridad(x), d=dDesde(x.ent)||0, q=restan(d);
     return `<tr><td>${chip(p)}</td>
-    <td>${fdia(x.f)}<small style="display:block;color:var(--mute);font-size:11px">${e.d} días</small></td>
+    <td>${fdia(x.ent)}<small style="display:block;color:var(--mute);font-size:11px">${d} días</small></td>
     <td class="r"><span class="pill ${q<=65?"p-b":q<=180?"p-w":"p-n"}">${q} d</span></td>
-    <td>${esc(x.int||x.vin||"—")}</td>
-    <td>${esc(x.mod)}<small style="display:block;color:var(--mute);font-size:11px">${e.vino?"🔧 ":""}${esc(queHacer(e))}</small></td>
-    </tr>`}).join("")}</table></div>`;
+    <td>${esc(x.vin)}</td><td>${esc(x.mod)}</td><td>${esc(tit(x.motivo))}</td></tr>`}).join("")}</table></div>`;
 }
 function tablaAcc(arr){
   if(!arr.length)return '<div class="vacio">Todas las entregas salieron con accesorios 👏</div>';
@@ -637,31 +632,22 @@ function tablaAcc(arr){
 
 function vContratos(){
   const vendidos=JAV.filter(x=>x.comprado===1&&enMes(x.fac));
+  const pend=[...pendientes()].sort((a,b)=>ordenP(a)-ordenP(b)||String(b.ent).localeCompare(String(a.ent)));
   const enEnt=vendidos.filter(x=>x.mom==="En la entrega").length;
   const recup=vendidos.length-enEnt;
-
-  const todas=oportCm();
-  const cuenta=p=>todas.filter(x=>prioridadCm(x.e)===p).length;
-  const vinieron=todas.filter(x=>x.e.vino).length;
-  const lista=vistaCm?todas.filter(x=>prioridadCm(x.e)===vistaCm):todas;
-  const sel=p=>vistaCm===p?" sel":"";
-
+  const cuenta=p=>pend.filter(x=>prioridad(x)===p).length;
   return `
   <div class="card"><h2>Vendidos en ${MESES[MES-1].toLowerCase()}</h2>
     <div class="fila"><span>Contratos<small>${enEnt} en la entrega · ${recup} post entrega</small></span><b>${vendidos.length}</b><span></span></div>
     <div class="fila"><span>Recuperados post entrega<small>los que se cerraron llamando</small></span><b style="color:var(--ok)">${recup}</b><span></span></div>
     <div class="fila"><span>Facturado</span><b>${pesos(vendidos.reduce((s,x)=>s+x.precio,0))}</b><span></span></div>
   </div>
-
-  <div class="card"><h2>Oportunidades de contrato <span>${todas.length} unidades dentro del año</span></h2>
-    <p style="font-size:13px;color:var(--ink2);margin-bottom:10px">Tocá un recuadro para ver solo esos. Ya salieron de la lista los que compraron contrato —acá o en otro lado— y los que dijeron que no.${vinieron?` <b>${vinieron} volvieron al service y lo pagaron</b>: esos seguro no tienen contrato, van marcados con 🔧.`:""}</p>
-    <div class="fila click${sel(P_ULT)}" onclick="filtrarCm('${P_ULT}')"><span>🔥 Último llamado<small>les queda menos de 2 meses de ventana</small></span><b style="color:var(--bad)">${cuenta(P_ULT)}</b><span></span></div>
-    <div class="fila click${sel(P_AHORA)}" onclick="filtrarCm('${P_AHORA}')"><span>📞 Llamar ahora<small>cierre de tarjeta el ${fdia(CIERRE.toISOString().slice(0,10))}</small></span><b style="color:var(--ok)">${cuenta(P_AHORA)}</b><span></span></div>
-    <div class="fila click${sel(P_SEM)}" onclick="filtrarCm('${P_SEM}')"><span>Esta semana</span><b style="color:var(--warn)">${cuenta(P_SEM)}</b><span></span></div>
-    <div class="fila click${sel(P_LUEGO)}" onclick="filtrarCm('${P_LUEGO}')"><span>Más adelante<small>recién entregados, todavía no es momento</small></span><b style="color:var(--mute)">${cuenta(P_LUEGO)}</b><span></span></div>
-    ${vistaCm?`<p style="margin:10px 0 0;font-size:13px"><a href="#" onclick="filtrarCm('');return false" style="color:var(--acc)">← ver la lista completa</a></p>`:""}
-    ${tabla(lista.slice(0,400))}
-    ${lista.length>400?`<p style="margin-top:8px;font-size:13px;color:var(--mute)">Se muestran los primeros 400 de ${lista.length}.</p>`:""}
+  <div class="card"><h2>Oportunidades de contrato <span>${pend.length} clientes</span></h2>
+    <div class="fila"><span>🔥 Último llamado<small>les queda menos de 2 meses de ventana</small></span><b style="color:var(--bad)">${cuenta(P_ULT)}</b><span></span></div>
+    <div class="fila"><span>📞 Llamar ahora<small>cierre de tarjeta el ${fdia(CIERRE.toISOString().slice(0,10))}</small></span><b style="color:var(--ok)">${cuenta(P_AHORA)}</b><span></span></div>
+    <div class="fila"><span>Esta semana</span><b style="color:var(--warn)">${cuenta(P_SEM)}</b><span></span></div>
+    <p style="font-size:13px;color:var(--ink2);margin:12px 0 10px">Ninguno dijo que no: pidieron recordatorio, esperan el cierre de tarjeta o dijeron "en otro momento". Buscá el cliente por el VIN en tu planilla.</p>
+    ${tabla(pend)}
   </div>
   <div class="card"><h2>Qué modelo compra contrato <span>${ANIO}</span></h2>
     ${barraMod(rankModelos(ANIO).slice().sort((a,b)=>b.pCm-a.pCm),"cm","pCm","Modelos con 3 o más entregas en el año. Verde: arriba del 40%.")}
@@ -671,16 +657,11 @@ function vContratos(){
 function vAccesorios(){
   const delMes=ACP.filter(x=>enMes(x.f));
   const total=delMes.reduce((s,x)=>s+x.t,0), obj=DATA.objAcc||0;
-  /* El ranking se puede mirar del mes o de todo el año. En el año se muestran más
-     renglones, que es donde se ve si quedó algún accesorio con el nombre mal escrito. */
-  const baseRk=rkAnio?ACC.filter(x=>+String(x.f).slice(0,4)===ANIO):ACC.filter(x=>enMes(x.f));
-  const items={}; baseRk.forEach(x=>x.items.forEach(i=>items[i]=(items[i]||0)+1));
-  const rk=Object.entries(items).sort((a,b)=>b[1]-a[1]).slice(0,rkAnio?40:15);
-  const totalRk=Object.keys(items).length;
+  const items={}; ACC.filter(x=>enMes(x.f)).forEach(x=>x.items.forEach(i=>items[i]=(items[i]||0)+1));
+  const rk=Object.entries(items).sort((a,b)=>b[1]-a[1]).slice(0,15);
   const c=C();
   const op=oportAcc();
   const cAcc=p=>op.filter(x=>prioridadAcc(x.d)===p).length;
-  const listaAcc=vistaAcc?op.filter(x=>prioridadAcc(x.d)===vistaAcc):op;
   const serie=new Array(12).fill(null);
   ACP.forEach(x=>{if(+x.f.slice(0,4)===ANIO){const m=+x.f.slice(5,7)-1;serie[m]=(serie[m]||0)+x.t}});
   return `
@@ -696,10 +677,8 @@ function vAccesorios(){
     yAxis:{type:"value",splitLine:{lineStyle:{color:c.split}},axisLabel:{color:c.mute,fontSize:11,formatter:v=>(v/1e6)+"M"}},
     series:[{type:"bar",data:serie,barMaxWidth:28,itemStyle:{color:c.vw,borderRadius:[4,4,0,0]}}]
   },230)}</div>
-  <div class="card"><h2>Lo que más se coloca
-    <span><a href="#" onclick="verRk(0);return false" style="color:${rkAnio?"var(--mute)":"var(--acc)"};text-decoration:none">${MESES[MES-1].toLowerCase()}</a> · <a href="#" onclick="verRk(1);return false" style="color:${rkAnio?"var(--acc)":"var(--mute)"};text-decoration:none">todo ${ANIO}</a></span></h2>
-    <div class="rk">${rk.length?rk.map(([k,v],i)=>`<div><span><em>${i+1}</em>${esc(k)}</span><b>${v}</b></div>`).join(""):`<div class="vacio">Sin datos ${rkAnio?"del año":"del mes"}.</div>`}</div>
-    ${totalRk>rk.length?`<p style="margin-top:8px;font-size:13px;color:var(--mute)">Se muestran los primeros ${rk.length} de ${totalRk} accesorios distintos.</p>`:""}
+  <div class="card"><h2>Lo que más se coloca <span>${MESES[MES-1].toLowerCase()}</span></h2>
+    <div class="rk">${rk.length?rk.map(([k,v],i)=>`<div><span><em>${i+1}</em>${esc(k)}</span><b>${v}</b></div>`).join(""):'<div class="vacio">Sin datos del mes.</div>'}</div>
   </div>
   ${(()=>{const c=cortesAcc(); if(!c.ent.n&&!c.post.n&&!c.sin.n)return "";
     return `<div class="card"><h2>Cómo se vendieron <span>${MESES[MES-1].toLowerCase()}</span></h2>
@@ -712,548 +691,44 @@ function vAccesorios(){
     ${barraMod(rankModelos(ANIO).slice().sort((a,b)=>b.pAcc-a.pAcc),"acc","pAcc","Modelos con 3 o más entregas en el año. Verde: arriba del 40%.")}
   </div>
   <div class="card"><h2>Oportunidades de accesorios <span>${op.length} entregas sin accesorios</span></h2>
-    <p style="font-size:13px;color:var(--ink2);margin-bottom:10px">Tocá un recuadro para ver solo esos. Entregas que salieron sin ningún accesorio y todavía están dentro del año.</p>
-    <div class="fila click${vistaAcc===P_ULT?" sel":""}" onclick="filtrarAcc('${P_ULT}')"><span>🔥 Último llamado<small>les queda menos de 2 meses de ventana</small></span><b style="color:var(--bad)">${cAcc(P_ULT)}</b><span></span></div>
-    <div class="fila click${vistaAcc===P_AHORA?" sel":""}" onclick="filtrarAcc('${P_AHORA}')"><span>📞 Llamar ahora<small>recién entregados o cierre de tarjeta cerca</small></span><b style="color:var(--ok)">${cAcc(P_AHORA)}</b><span></span></div>
-    <div class="fila click${vistaAcc===P_SEM?" sel":""}" onclick="filtrarAcc('${P_SEM}')"><span>Esta semana</span><b style="color:var(--warn)">${cAcc(P_SEM)}</b><span></span></div>
-    ${vistaAcc?`<p style="margin:10px 0 0;font-size:13px"><a href="#" onclick="filtrarAcc('');return false" style="color:var(--acc)">← ver la lista completa</a></p>`:""}
-    ${tablaAcc(listaAcc.slice(0,400))}
-    ${listaAcc.length>400?`<p style="margin-top:8px;font-size:13px;color:var(--mute)">Se muestran los primeros 400 de ${listaAcc.length}.</p>`:""}
+    <div class="fila"><span>🔥 Último llamado<small>les queda menos de 2 meses de ventana</small></span><b style="color:var(--bad)">${cAcc(P_ULT)}</b><span></span></div>
+    <div class="fila"><span>📞 Llamar ahora<small>recién entregados o cierre de tarjeta cerca</small></span><b style="color:var(--ok)">${cAcc(P_AHORA)}</b><span></span></div>
+    <div class="fila"><span>Esta semana</span><b style="color:var(--warn)">${cAcc(P_SEM)}</b><span></span></div>
+    <p style="font-size:13px;color:var(--ink2);margin:12px 0 10px">Entregas que salieron sin ningún accesorio y todavía están dentro del año. Buscá el cliente por el interno o el N° de OR en tu planilla.</p>
+    ${tablaAcc(op)}
   </div>`;
-}
-
-
-/* ═══ CIERRE DEL MES E INFORME ═════════════════════════════════════════════
-   La pestaña "Cierre" arma la lectura del mes que cerró, en el orden que
-   pidió Pablo: cómo nos fue · a qué apuntamos en el mes que viene · cómo
-   venimos en el año.
-
-   El botón baja un HTML suelto para adjuntar al correo. Ese archivo se abre
-   en cualquier computadora o celular, sin internet y sin librerías: los dos
-   gráficos van dibujados a mano en SVG y son interactivos igual (tarjeta al
-   pasar el mouse y botones para prender y apagar cada línea).
-
-   NO LLEVA NINGÚN DATO DE CLIENTES: ni nombres, ni chasis, ni internos, ni
-   números de OR. Solo totales. El detalle por unidad está en las planillas.
-   ──────────────────────────────────────────────────────────────────────── */
-
-const enMesDe=(d,m,a)=>!!d&&+String(d).slice(0,4)===a&&+String(d).slice(5,7)===m;
-const mesAnterior=(m,a)=>m===1?{m:12,a:a-1}:{m:m-1,a:a};
-const mesSiguiente=(m,a)=>m===12?{m:1,a:a+1}:{m:m+1,a:a};
-/* Para meter HTML dentro de un atributo sin romperlo */
-const attr=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
-
-/* Los números de un mes cualquiera, sin mover el mes que se está mirando.
-   Las entregas son solo las de Venta Tradicional, Planes de Ahorro y Venta
-   Corporativa: las mayoristas no llevan contrato ni accesorios y no entran
-   en ninguna tasa. */
-function cifrasMes(m,a){
-  const ent=ENT.filter(r=>CANAL_BASE.includes(r.canal)&&enMesDe(r.f,m,a));
-  const conAcc=ent.filter(r=>r.acc).length;
-  /* Los contratos del año salen de la serie unificada; si no llegó, de la
-     planilla de Javier, que es lo mismo desde mayo. */
-  const lista=CMV.length?CMV.filter(x=>enMesDe(x.f,m,a))
-    :JAV.filter(x=>x.comprado===1&&enMesDe(x.fac,m,a)).map(x=>({f:x.fac,mom:x.mom}));
-  const jav=JAV.filter(x=>x.comprado===1&&enMesDe(x.fac,m,a));
-  const plata=jav.reduce((s,x)=>s+x.precio,0);
-  const or=ACP.filter(x=>enMesDe(x.f,m,a));
-  const acc=or.reduce((s,x)=>s+x.t,0);
-  const enEnt=lista.filter(x=>x.mom==="En la entrega").length;
-  return {m:m,a:a,nom:MESES[m-1],ent:ent.length,cm:lista.length,
-    tasa:ent.length?Math.round(lista.length/ent.length*100):0,
-    plata:plata, ticket:jav.length?plata/jav.length:0,
-    cmEnt:enEnt, cmPost:Math.max(lista.length-enEnt,0),
-    acc:acc, nOr:or.length, tickAcc:or.length?acc/or.length:0,
-    conAcc:conAcc, tasaAcc:ent.length?Math.round(conAcc/ent.length*100):0, futuro:false};
-}
-/* Un mes que todavía no entra en el informe. El informe de un mes cerrado se
-   corta ahí: si el 2 de octubre se informa septiembre, la entrega del día 1 de
-   octubre no tiene que aparecer en ningún gráfico ni en ningún acumulado. */
-function mesVacio(m,a){
-  return {m:m,a:a,nom:MESES[m-1],ent:0,cm:0,tasa:0,plata:0,ticket:0,cmEnt:0,cmPost:0,
-          acc:0,nOr:0,tickAcc:0,conAcc:0,tasaAcc:0,futuro:true};
-}
-
-/* Variación contra otro número, en una etiqueta corta */
-function varia(hoy,antes){
-  if(!antes) return {txt:"sin referencia",col:"#7b8aa0"};
-  const p=Math.round((hoy-antes)/Math.abs(antes)*100);
-  /* Si la diferencia no llega al 1% no se dice "igual", porque no lo es */
-  const t=p===0?(hoy===antes?"igual":"casi igual"):(p>0?"▲ +":"▼ ")+Math.abs(p)+"%";
-  return {txt:t,col:p>0?"#1f8a5b":p<0?"#c23b3b":"#7b8aa0"};
-}
-/* Las tasas se comparan en puntos: del 25% al 31% subió 6 puntos, no un 24% */
-function variaPts(hoy,antes){
-  if(antes===null||antes===undefined) return {txt:"sin referencia",col:"#7b8aa0"};
-  const p=hoy-antes;
-  return {txt:p===0?"igual":(p>0?"▲ +":"▼ ")+Math.abs(p)+" pts",
-          col:p>0?"#1f8a5b":p<0?"#c23b3b":"#7b8aa0"};
-}
-
-/* Unidades a las que se les termina el año durante un mes dado: son las que
-   hay que llamar ya o se pierden. */
-function vencenEn(m,a){
-  return oportCm().filter(x=>{
-    const v=new Date(x.f+"T00:00:00"); v.setDate(v.getDate()+VENTANA_FIN);
-    return v.getMonth()+1===m&&v.getFullYear()===a;
-  }).length;
-}
-/* Por qué no compraron, agrupado. Solo el motivo y cuántas veces apareció. */
-function motivosMes(m,a){
-  const t={};
-  JAV.filter(x=>x.comprado===0&&x.motivo&&enMesDe(x.ent,m,a)).forEach(x=>{
-    const k=tit(String(x.motivo).replace(/\s+/g," ").trim()); t[k]=(t[k]||0)+1; });
-  return Object.entries(t).sort((x,y)=>y[1]-x[1]);
-}
-/* Qué accesorios se colocaron, con los nombres ya unificados */
-function mixAcc(m,a){
-  const t={};
-  ACC.filter(x=>enMesDe(x.f,m,a)).forEach(x=>x.items.forEach(i=>t[i]=(t[i]||0)+1));
-  return Object.entries(t).sort((x,y)=>y[1]-x[1]);
-}
-
-/* Todo lo que necesitan la pestaña y el informe, calculado una sola vez */
-function datosCierre(m,a){
-  const ant=mesAnterior(m,a), sig=mesSiguiente(m,a);
-  const act=cifrasMes(m,a), pre=cifrasMes(ant.m,ant.a);
-  /* El año se corta en el mes informado: lo que pasó después no es de este informe */
-  const anio=[]; for(let i=1;i<=12;i++) anio.push(i<=m?cifrasMes(i,a):mesVacio(i,a));
-  const conDato=anio.filter(x=>x.ent>0);
-  const entAnio=conDato.reduce((s,x)=>s+x.ent,0);
-  const cmAnio=conDato.reduce((s,x)=>s+x.cm,0);
-  const accAnio=anio.reduce((s,x)=>s+x.acc,0);
-  const op=oportCm(), opa=oportAcc(), rk=rankModelos(a);
-  return {m:m,a:a,sig:sig,ant:ant,act:act,pre:pre,anio:anio,
-    meses:conDato.length, entAnio:entAnio, cmAnio:cmAnio, accAnio:accAnio,
-    prom:{ent:conDato.length?entAnio/conDato.length:0,
-          cm:conDato.length?cmAnio/conDato.length:0,
-          tasa:entAnio?Math.round(cmAnio/entAnio*100):0,
-          acc:conDato.length?accAnio/conDato.length:0},
-    tasaAnio:entAnio?Math.round(cmAnio/entAnio*100):0,
-    mejorAcc:anio.slice().sort((x,y)=>y.acc-x.acc)[0],
-    mejorTasa:conDato.slice().sort((x,y)=>y.tasa-x.tasa)[0],
-    cort:cortesAcc(m,a),
-    obj:DATA.objAcc||0,
-    meta:Math.ceil(act.ent*META_CM),
-    op:op.length,
-    opUlt:op.filter(x=>prioridadCm(x.e)===P_ULT).length,
-    opAhora:op.filter(x=>prioridadCm(x.e)===P_AHORA).length,
-    vencen:vencenEn(sig.m,sig.a),
-    opa:opa.length,
-    opaUlt:opa.filter(x=>prioridadAcc(x.d)===P_ULT).length,
-    motivos:motivosMes(m,a), mix:mixAcc(m,a),
-    rkCm:rk.slice().sort((x,y)=>y.pCm-x.pCm).slice(0,3),
-    rkAcc:rk.slice().sort((x,y)=>y.pAcc-x.pAcc).slice(0,3),
-    gen:DATA.generado||""};
-}
-
-/* ── Gráficos del informe, dibujados a mano ──────────────────────────────
-   Sin ECharts ni nada que haya que bajar: el archivo tiene que abrirse en
-   la computadora de gerencia aunque no tenga internet. */
-function svgAnio(D){
-  const W=760,H=340,L=46,R=52,T=18,B=48,h=H-T-B,w=W-L-R,paso=w/12;
-  /* El techo del eje queda en un número redondo y divisible en 4, así las
-     marcas de la izquierda salen enteras y no 13,75 · 27,5 · 41,25 */
-  const alto=Math.max.apply(null,D.anio.map(x=>x.ent));
-  const tope=Math.max(Math.ceil(alto/20)*20,20);
-  const yE=v=>T+h-(v/tope)*h;
-  const yP=v=>T+h-(Math.min(v,100)/100)*h;
-  const cx=i=>L+paso*i+paso/2;
-  const bw=Math.min(30,paso*0.52);
-  const n=v=>Number(v).toFixed(1);
-  let g="";
-  for(let k=0;k<=4;k++){
-    const y=T+h-h*k/4;
-    g+=`<line x1="${L}" y1="${n(y)}" x2="${W-R}" y2="${n(y)}" stroke="#eef1f6"/>`
-      +`<text x="${L-8}" y="${n(y+4)}" text-anchor="end" font-size="11" fill="#7b8aa0">${Math.round(tope*k/4)}</text>`
-      +`<text x="${W-R+8}" y="${n(y+4)}" font-size="11" fill="#7b8aa0">${25*k}%</text>`;
-  }
-  D.anio.forEach((x,i)=>{
-    if(!x.ent)return;
-    const con=Math.min(x.cm,x.ent), sin=Math.max(x.ent-x.cm,0);
-    const x0=cx(i)-bw/2, hCon=(con/tope)*h, hSin=(sin/tope)*h;
-    g+=`<rect x="${n(x0)}" y="${n(T+h-hCon-hSin)}" width="${n(bw)}" height="${n(hSin)}" fill="#c9d8f0" rx="3"/>`
-      +`<rect x="${n(x0)}" y="${n(T+h-hCon)}" width="${n(bw)}" height="${n(hCon)}" fill="#001e50"/>`;
-  });
-  g+=`<line x1="${L}" y1="${n(yP(30))}" x2="${W-R}" y2="${n(yP(30))}" stroke="#c23b3b" stroke-width="1.5" stroke-dasharray="6 4"/>`
-    +`<text x="${W-R-2}" y="${n(yP(30)-6)}" text-anchor="end" font-size="11" fill="#c23b3b">Meta 30%</text>`;
-  D.anio.forEach((x,i)=>{
-    g+=`<text x="${n(cx(i))}" y="${H-B+18}" text-anchor="middle" font-size="11" fill="${x.m===D.m?"#001e50":"#7b8aa0"}" font-weight="${x.m===D.m?"700":"400"}">${MESES[i].slice(0,3)}</text>`;
-  });
-  const linea=(campo,color,serie)=>{
-    const pts=D.anio.map((x,i)=>x.ent?n(cx(i))+","+n(yP(x[campo])):null).filter(Boolean);
-    if(!pts.length)return "";
-    let o=`<g data-serie="${serie}"><polyline points="${pts.join(" ")}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"/>`;
-    D.anio.forEach((x,i)=>{ if(x.ent) o+=`<circle cx="${n(cx(i))}" cy="${n(yP(x[campo]))}" r="3.5" fill="#fff" stroke="${color}" stroke-width="2.5"/>`; });
-    return o+"</g>";
-  };
-  let hz="";
-  D.anio.forEach((x,i)=>{ hz+=`<rect class="hz" data-i="${i}" x="${n(L+paso*i)}" y="${T}" width="${n(paso)}" height="${h}" fill="transparent"/>`; });
-  const tips=D.anio.map(x=>x.ent
-    ?`<b>${x.nom} ${x.a}</b><br>${x.ent} entregas<br>${x.cm} contratos · ${x.tasa}%<br>${x.conAcc} con accesorios · ${x.tasaAcc}%<br>${mill(x.acc)} en accesorios`
-    :`<b>${x.nom} ${x.a}</b><br>${x.futuro?"fuera del informe":"sin entregas"}`);
-  return `<div class="gwrap">
-    <div class="togs no-print">
-      <button class="tog" data-s="tcm"><i style="background:#1b6fe0"></i>Tasa de contratos</button>
-      <button class="tog" data-s="tac"><i style="background:#1f8a5b"></i>Tasa de accesorios</button>
-    </div>
-    <svg class="graf" viewBox="0 0 ${W} ${H}" data-tip="${attr(JSON.stringify(tips))}">${g}${linea("tasa","#1b6fe0","tcm")}${linea("tasaAcc","#1f8a5b","tac")}${hz}</svg>
-    <p class="ley"><span><i style="background:#001e50"></i>Entregas con contrato vendido</span><span><i style="background:#c9d8f0"></i>Entregas sin contrato</span><span class="nota">Pasá el mouse por cada mes · tocá los botones para ver cada línea</span></p>
-  </div>`;
-}
-
-function svgAccAnio(D){
-  const W=760,H=265,L=58,R=20,T=18,B=46,h=H-T-B,w=W-L-R,paso=w/12;
-  const alto=Math.max.apply(null,D.anio.map(x=>x.acc).concat([D.obj]));
-  const tope=Math.max(Math.ceil(alto/5e6)*5e6,5e6);
-  const y=v=>T+h-(v/tope)*h;
-  const cx=i=>L+paso*i+paso/2;
-  const bw=Math.min(32,paso*0.55);
-  const n=v=>Number(v).toFixed(1);
-  let g="";
-  for(let k=0;k<=4;k++){
-    const yy=T+h-h*k/4;
-    g+=`<line x1="${L}" y1="${n(yy)}" x2="${W-R}" y2="${n(yy)}" stroke="#eef1f6"/>`
-      +`<text x="${L-8}" y="${n(yy+4)}" text-anchor="end" font-size="11" fill="#7b8aa0">$ ${Math.round(tope*k/4/1e6)} M</text>`;
-  }
-  D.anio.forEach((x,i)=>{
-    if(!x.acc)return;
-    const hh=(x.acc/tope)*h;
-    g+=`<rect x="${n(cx(i)-bw/2)}" y="${n(T+h-hh)}" width="${n(bw)}" height="${n(hh)}" fill="${x.m===D.m?"#001e50":"#1b6fe0"}" rx="3"/>`;
-  });
-  if(D.obj) g+=`<line x1="${L}" y1="${n(y(D.obj))}" x2="${W-R}" y2="${n(y(D.obj))}" stroke="#c23b3b" stroke-width="1.5" stroke-dasharray="6 4"/>`
-    +`<text x="${W-R-2}" y="${n(y(D.obj)-6)}" text-anchor="end" font-size="11" fill="#c23b3b">Objetivo ${mill(D.obj)}</text>`;
-  let hz="";
-  D.anio.forEach((x,i)=>{
-    g+=`<text x="${n(cx(i))}" y="${H-B+18}" text-anchor="middle" font-size="11" fill="${x.m===D.m?"#001e50":"#7b8aa0"}" font-weight="${x.m===D.m?"700":"400"}">${MESES[i].slice(0,3)}</text>`;
-    hz+=`<rect class="hz" data-i="${i}" x="${n(L+paso*i)}" y="${T}" width="${n(paso)}" height="${h}" fill="transparent"/>`;
-  });
-  const tips=D.anio.map(x=>x.nOr
-    ?`<b>${x.nom} ${x.a}</b><br>${mill(x.acc)} facturados<br>${x.nOr} OR · ticket ${pesos(x.tickAcc)}<br>${D.obj?Math.round(x.acc/D.obj*100)+"% del objetivo":""}`
-    :`<b>${x.nom} ${x.a}</b><br>${x.futuro?"fuera del informe":"sin facturación"}`);
-  return `<div class="gwrap"><svg class="graf" viewBox="0 0 ${W} ${H}" data-tip="${attr(JSON.stringify(tips))}">${g}${hz}</svg></div>`;
-}
-
-/* ── El informe suelto ───────────────────────────────────────────────────── */
-function informeHTML(m,a){
-  const D=datosCierre(m,a);
-  const mes=MESES[m-1], sigNom=MESES[D.sig.m-1];
-  const vEnt=varia(D.act.ent,D.pre.ent), vCm=varia(D.act.cm,D.pre.cm), vAcc=varia(D.act.acc,D.pre.acc);
-  const cumpl=D.obj?Math.round(D.act.acc/D.obj*100):0;
-  const okCm=D.act.tasa>=30;
-  const fila=(t,hoy,antes,v,prom)=>`<tr><td>${t}</td><td class="r"><b>${hoy}</b></td><td class="r">${antes}</td>
-    <td class="r" style="color:${v.col}">${v.txt}</td><td class="r">${prom}</td></tr>`;
-  const JS = "(function(){var tip=document.getElementById('tip');"
-    + "function mover(e){tip.style.left=Math.min(e.clientX+16,innerWidth-250)+'px';tip.style.top=Math.max(e.clientY-12,8)+'px';}"
-    + "Array.prototype.forEach.call(document.querySelectorAll('.graf'),function(g){"
-    + "var d=JSON.parse(g.getAttribute('data-tip'));"
-    + "Array.prototype.forEach.call(g.querySelectorAll('.hz'),function(z){"
-    + "z.addEventListener('mouseenter',function(){tip.innerHTML=d[+z.getAttribute('data-i')];tip.style.display='block';});"
-    + "z.addEventListener('mousemove',mover);"
-    + "z.addEventListener('mouseleave',function(){tip.style.display='none';});});});"
-    + "Array.prototype.forEach.call(document.querySelectorAll('.tog'),function(b){"
-    + "b.addEventListener('click',function(){var off=b.classList.toggle('off');"
-    + "Array.prototype.forEach.call(document.querySelectorAll('[data-serie=\"'+b.getAttribute('data-s')+'\"]'),"
-    + "function(el){el.style.display=off?'none':'';});});});})();";
-  return `<!doctype html><html lang="es"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Informe de ventas · ${mes} ${a} · Autosol Jujuy</title>
-<style>
-:root{--vw:#001e50;--acc:#1b6fe0;--ok:#1f8a5b;--bad:#c23b3b;--warn:#b07800;
---ink:#0b1f3a;--ink2:#48617f;--mute:#7b8aa0;--line:#e2e7ef;--paper:#f5f7fb}
-*{box-sizing:border-box}
-body{margin:0;background:#e9edf4;color:var(--ink);font-size:15px;line-height:1.5;
-  font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
-.hoja{max-width:920px;margin:0 auto;background:#fff;box-shadow:0 2px 18px rgba(0,30,80,.1)}
-header{background:var(--vw);color:#fff;padding:26px 30px}
-header h1{margin:0 0 4px;font-size:23px;font-weight:600;letter-spacing:-.2px}
-header .sub{font-size:14px;opacity:.82}
-header .marca{font-size:12px;text-transform:uppercase;letter-spacing:1.6px;opacity:.7;margin-bottom:10px}
-.bloque{padding:26px 30px;border-bottom:1px solid var(--line)}
-.bloque h2{display:flex;align-items:center;gap:11px;margin:0 0 4px;font-size:19px;font-weight:600}
-.bloque h2 .num{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;
-  border-radius:50%;background:var(--vw);color:#fff;font-size:14px;flex:none}
-.bloque .intro{margin:0 0 18px 39px;font-size:14px;color:var(--ink2)}
-h3{margin:24px 0 10px;font-size:15px;font-weight:600;color:var(--ink)}
-.kpis{display:flex;gap:12px;flex-wrap:wrap}
-.kpi{flex:1 1 180px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
-.kpi small{display:block;font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.6px}
-.kpi b{display:block;font-size:30px;font-weight:600;letter-spacing:-1px;margin:2px 0}
-.kpi b i{font-size:18px;font-style:normal;font-weight:600}
-.kpi em{display:block;font-size:12.5px;font-style:normal;color:var(--ink2)}
-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14px}
-th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line)}
-th{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--mute);font-weight:600}
-td.r,th.r{text-align:right}
-tr:last-child td{border-bottom:none}
-.lista{margin:10px 0 0;padding:0;list-style:none}
-.lista li{display:flex;justify-content:space-between;gap:14px;padding:7px 0;border-bottom:1px dotted var(--line);font-size:14px}
-.lista li b{white-space:nowrap}
-.caja{background:var(--paper);border-left:4px solid var(--acc);border-radius:0 10px 10px 0;padding:13px 16px;margin-top:16px;font-size:14px}
-.caja.ok{border-left-color:var(--ok)}
-.caja.al{border-left-color:var(--bad)}
-.caja b{color:var(--ink)}
-.gwrap{position:relative;margin-top:12px}
-.graf{width:100%;height:auto;display:block;font-family:inherit}
-.togs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
-.tog{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);
-  border-radius:99px;padding:5px 12px;font:inherit;font-size:12.5px;color:var(--ink2);cursor:pointer}
-.tog i{width:10px;height:10px;border-radius:3px;display:inline-block}
-.tog.off{opacity:.42}
-.ley{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0 0;font-size:12.5px;color:var(--ink2)}
-.ley span{display:inline-flex;align-items:center;gap:6px}
-.ley i{width:10px;height:10px;border-radius:3px;display:inline-block}
-.ley .nota{color:var(--mute)}
-#tip{position:fixed;display:none;z-index:9;pointer-events:none;background:#fff;color:var(--ink);
-  border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:13px;line-height:1.45;
-  box-shadow:0 6px 20px rgba(0,30,80,.16);max-width:240px}
-footer{padding:20px 30px;font-size:12.5px;color:var(--mute)}
-.pie-nota{margin:0 0 6px}
-@media print{body{background:#fff}.hoja{box-shadow:none;max-width:none}.no-print{display:none}
-  .bloque{break-inside:avoid;page-break-inside:avoid}}
-@media(max-width:620px){.bloque{padding:20px 16px}header{padding:20px 16px}
-  .bloque .intro{margin-left:0}.kpi b{font-size:26px}}
-</style></head><body>
-<div id="tip"></div>
-<div class="hoja">
-<header>
-  <div class="marca">Autosol Jujuy · Volkswagen</div>
-  <h1>Contratos de Mantenimiento y Accesorios · ${mes} ${a}</h1>
-  <div class="sub">Informe de cierre de mes · generado el ${fdia(new Date().toISOString().slice(0,10))}${D.gen?` · datos al ${esc(D.gen)}`:""}</div>
-</header>
-
-<section class="bloque">
-  <h2><span class="num">1</span> Cómo nos fue en ${mes.toLowerCase()}</h2>
-  <p class="intro">Sobre las entregas de Venta Tradicional, Planes de Ahorro y Venta Corporativa, que son las que llevan contrato y accesorios. Las mayoristas quedan afuera.</p>
-  <div class="kpis">
-    <div class="kpi"><small>Entregas del mes</small><b>${D.act.ent}</b>
-      <em>${D.pre.ent?`en ${MESES[D.ant.m-1].toLowerCase()} fueron ${D.pre.ent}`:"sin mes anterior para comparar"}</em></div>
-    <div class="kpi"><small>Contratos vendidos</small><b style="color:${okCm?"var(--ok)":"var(--bad)"}">${D.act.cm} <i>· ${D.act.tasa}%</i></b>
-      <em>meta 30% = ${D.meta} contratos · ${okCm?"alcanzada":`faltaron ${Math.max(D.meta-D.act.cm,0)}`}</em></div>
-    <div class="kpi"><small>Accesorios facturados</small><b style="color:${cumpl>=100?"var(--ok)":cumpl>=80?"var(--warn)":"var(--bad)"}">${mill(D.act.acc)}</b>
-      <em>${D.obj?`objetivo ${mill(D.obj)} · ${cumpl}%`:"objetivo sin cargar"}</em></div>
-  </div>
-
-  <table>
-    <tr><th></th><th class="r">${mes}</th><th class="r">${MESES[D.ant.m-1]}</th><th class="r">Variación</th><th class="r">Promedio ${a}</th></tr>
-    ${fila("Entregas",D.act.ent,D.pre.ent||"—",vEnt,Math.round(D.prom.ent))}
-    ${fila("Contratos vendidos",D.act.cm,D.pre.cm||"—",vCm,Math.round(D.prom.cm))}
-    ${fila("Tasa de contratos",D.act.tasa+"%",D.pre.ent?D.pre.tasa+"%":"—",D.pre.ent?variaPts(D.act.tasa,D.pre.tasa):varia(0,0),D.prom.tasa+"%")}
-    ${fila("Entregas con accesorios",D.act.conAcc+" · "+D.act.tasaAcc+"%",D.pre.ent?D.pre.conAcc+" · "+D.pre.tasaAcc+"%":"—",D.pre.ent?variaPts(D.act.tasaAcc,D.pre.tasaAcc):varia(0,0),"—")}
-    ${fila("Accesorios facturados",mill(D.act.acc),D.pre.acc?mill(D.pre.acc):"—",vAcc,mill(D.prom.acc))}
-    ${fila("OR de accesorios",D.act.nOr,D.pre.nOr||"—",varia(D.act.nOr,D.pre.nOr),"—")}
-  </table>
-
-  <h3>Cómo se vendió</h3>
-  <ul class="lista">
-    <li><span>Contratos cerrados en el momento de la entrega</span><b>${D.act.cmEnt}</b></li>
-    <li><span>Contratos recuperados después de la entrega, llamando al cliente</span><b style="color:var(--ok)">${D.act.cmPost}</b></li>
-    <li><span>Accesorios colocados junto con la entrega</span><b>${pesos(D.cort.ent.m)} · ${D.cort.ent.n} OR</b></li>
-    <li><span>Accesorios recuperados después de la entrega${D.cort.promDias?` · el cliente volvió a los ${D.cort.promDias} días en promedio`:""}</span><b style="color:var(--ok)">${pesos(D.cort.post.m)} · ${D.cort.post.n} OR</b></li>
-    ${D.cort.sin.n?`<li><span>OR todavía sin cruzar con su entrega</span><b>${pesos(D.cort.sin.m)} · ${D.cort.sin.n} OR</b></li>`:""}
-  </ul>
-  <div class="caja ${okCm?"ok":"al"}">
-    ${okCm
-      ? `<b>${mes} cerró arriba de la meta:</b> ${D.act.cm} contratos sobre ${D.act.ent} entregas, ${D.act.tasa}% contra el 30% comprometido. De esos, ${D.act.cmPost} se recuperaron llamando después de la entrega.`
-      : `<b>${mes} cerró abajo de la meta:</b> ${D.act.cm} contratos sobre ${D.act.ent} entregas, ${D.act.tasa}% contra el 30% comprometido. Faltaron ${Math.max(D.meta-D.act.cm,0)} contratos.`}
-    ${D.obj?` En accesorios se facturaron ${mill(D.act.acc)} sobre un objetivo de ${mill(D.obj)} (${cumpl}%), en ${D.act.nOr} OR con un ticket promedio de ${pesos(D.act.tickAcc)}.`:""}
-  </div>
-</section>
-
-<section class="bloque">
-  <h2><span class="num">2</span> A qué apuntamos en ${sigNom.toLowerCase()}</h2>
-  <p class="intro">Lo que hay sobre la mesa hoy: unidades entregadas que todavía están dentro del año y se les puede vender.</p>
-  <div class="kpis">
-    <div class="kpi"><small>Unidades sin contrato</small><b>${D.op}</b><em>entregadas y todavía dentro del año</em></div>
-    <div class="kpi"><small>Se les vence el año en ${sigNom.toLowerCase()}</small><b style="color:${D.vencen?"var(--bad)":"var(--ok)"}">${D.vencen}</b><em>último mes para ofrecerles contrato</em></div>
-    <div class="kpi"><small>Entregas sin accesorios</small><b>${D.opa}</b><em>${D.opaUlt} con menos de 2 meses de ventana</em></div>
-  </div>
-
-  <h3>Objetivos de ${sigNom.toLowerCase()}</h3>
-  <ul class="lista">
-    <li><span>Contratos para cumplir el 30%, con un volumen de entregas como el de ${mes.toLowerCase()} (${D.act.ent})</span><b>${D.meta}</b></li>
-    <li><span>Accesorios a facturar</span><b>${D.obj?mill(D.obj):"sin cargar"}</b></li>
-    ${D.obj&&D.act.tickAcc?`<li><span>OR de accesorios necesarias, al ticket promedio actual de ${pesos(D.act.tickAcc)}</span><b>${Math.ceil(D.obj/D.act.tickAcc)}</b></li>`:""}
-    <li><span>Llamados prioritarios ya cargados en el tablero</span><b>${D.opUlt+D.opAhora}</b></li>
-  </ul>
-
-  ${D.motivos.length?`<h3>Por qué no compran</h3>
-  <ul class="lista">${D.motivos.slice(0,6).map(x=>`<li><span>${esc(x[0])}</span><b>${x[1]}</b></li>`).join("")}</ul>
-  <p style="font-size:12.5px;color:var(--mute);margin-top:8px">Motivos registrados en las entregas de ${mes.toLowerCase()}.</p>`:""}
-
-  ${D.rkCm.length?`<h3>Qué modelo compra más</h3>
-  <table>
-    <tr><th>Modelo</th><th class="r">Contrato</th><th class="r">Accesorios</th><th class="r">Entregas ${a}</th></tr>
-    ${D.rkCm.map(r=>`<tr><td>${esc(r.mod)}</td><td class="r"><b>${r.pCm}%</b></td><td class="r">${r.pAcc}%</td><td class="r">${r.ent}</td></tr>`).join("")}
-  </table>
-  <p style="font-size:12.5px;color:var(--mute);margin-top:8px">Modelos con 3 o más entregas en el año, ordenados por tasa de contrato.</p>`:""}
-
-  ${D.mix.length?`<h3>Accesorios que más se colocan</h3>
-  <ul class="lista">${D.mix.slice(0,8).map(x=>`<li><span>${esc(x[0])}</span><b>${x[1]}</b></li>`).join("")}</ul>
-  <p style="font-size:12.5px;color:var(--mute);margin-top:8px">Veces que cada accesorio apareció en las OR de ${mes.toLowerCase()}.</p>`:""}
-</section>
-
-<section class="bloque">
-  <h2><span class="num">3</span> Cómo venimos en el año</h2>
-  <p class="intro">Entregas mes a mes hasta ${mes.toLowerCase()}, partidas entre las que salieron con contrato y las que no, con las dos tasas superpuestas. Lo posterior al mes informado no entra.</p>
-  ${svgAnio(D)}
-
-  <h3>Accesorios facturados mes a mes</h3>
-  ${svgAccAnio(D)}
-
-  <h3>Acumulado ${a} · de enero a ${mes.toLowerCase()}</h3>
-  <ul class="lista">
-    <li><span>Entregas</span><b>${D.entAnio}</b></li>
-    <li><span>Contratos vendidos</span><b>${D.cmAnio}</b></li>
-    <li><span>Tasa de contratos del año</span><b style="color:${D.tasaAnio>=30?"var(--ok)":"var(--bad)"}">${D.tasaAnio}%</b></li>
-    <li><span>Accesorios facturados</span><b>${mill(D.accAnio)}</b></li>
-    <li><span>Promedio mensual de accesorios<br><small style="color:var(--mute)">sobre ${D.meses} ${D.meses===1?"mes":"meses"} con actividad</small></span><b>${mill(D.prom.acc)}</b></li>
-    ${D.mejorAcc&&D.mejorAcc.acc?`<li><span>Mejor mes en accesorios</span><b>${D.mejorAcc.nom} · ${mill(D.mejorAcc.acc)}</b></li>`:""}
-    ${D.mejorTasa?`<li><span>Mejor mes en tasa de contratos</span><b>${D.mejorTasa.nom} · ${D.mejorTasa.tasa}%</b></li>`:""}
-  </ul>
-</section>
-
-<footer>
-  <p class="pie-nota">Este informe no incluye datos de clientes. El detalle por unidad está en las planillas de ventas.</p>
-  <p class="pie-nota">Autosol Jujuy · Volkswagen · Sector Pre-Entregas · armado desde el tablero de ventas de Contratos de Mantenimiento.</p>
-</footer>
-</div>
-<script>${JS}<\/script>
-</body></html>`;
-}
-
-/* El archivo se arma en el navegador y se baja. No pasa por ningún servidor. */
-function nombreInforme(m,a){ return `Informe CM y Accesorios ${MESES[m-1]} ${a} - Autosol Jujuy.html`; }
-function descargarInforme(){
-  const b=new Blob([informeHTML(MES,ANIO)],{type:"text/html;charset=utf-8"});
-  const u=URL.createObjectURL(b), a=document.createElement("a");
-  a.href=u; a.download=nombreInforme(MES,ANIO);
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=>URL.revokeObjectURL(u),8000);
-}
-function verInforme(){
-  const b=new Blob([informeHTML(MES,ANIO)],{type:"text/html;charset=utf-8"});
-  const u=URL.createObjectURL(b);
-  const v=window.open(u,"_blank");
-  if(!v) alert("El navegador bloqueó la ventana nueva. Usá el botón de descargar.");
-  setTimeout(()=>URL.revokeObjectURL(u),30000);
-}
-
-/* ── La pestaña en el tablero ─────────────────────────────────────────────── */
-function vCierre(){
-  const D=datosCierre(MES,ANIO);
-  const mes=MESES[MES-1], sigNom=MESES[D.sig.m-1];
-  const abierto=(ANIO===ANIO_HOY&&MES===MES_HOY);
-  const cumpl=D.obj?Math.round(D.act.acc/D.obj*100):0;
-  const okCm=D.act.tasa>=30;
-  const v=(h,p)=>{const r=varia(h,p);return `<small style="color:${r.col}">${r.txt} vs ${MESES[D.ant.m-1].toLowerCase()}</small>`};
-  const serieAcc=D.anio.map(x=>x.acc||null);
-  const c=C();
-  return `
-  <div class="card" style="border-left:4px solid var(--acc)">
-    <h2>Informe de ${mes.toLowerCase()} ${ANIO} <span>para adjuntar al correo</span></h2>
-    <p style="font-size:14px;color:var(--ink2);margin-bottom:12px">Baja un archivo que se abre solo, en cualquier computadora o celular, sin internet. Tiene los tres bloques de abajo, con los gráficos interactivos. <b>No lleva datos de clientes</b>: solo totales.</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn pri" onclick="descargarInforme()">📄 Descargar el informe de ${mes.toLowerCase()}</button>
-      <button class="btn" onclick="verInforme()">👁 Verlo antes</button>
-    </div>
-    ${abierto?`<p style="margin:12px 0 0;font-size:13px;color:var(--warn)"><b>Ojo:</b> ${mes.toLowerCase()} todavía no cerró. El informe va a salir con los datos de hoy. Con la flecha ‹ de arriba pasás al mes cerrado.</p>`
-             :`<p style="margin:12px 0 0;font-size:13px;color:var(--mute)">${mes} ${ANIO} ya está cerrado. Con las flechas de arriba podés armar el informe de cualquier otro mes.</p>`}
-  </div>
-
-  <div class="card">
-    <h2>1 · Cómo nos fue en ${mes.toLowerCase()} <span>entregas tradicional, planes y corporativa</span></h2>
-    <div class="fila"><span>Entregas${D.pre.ent?`<small>en ${MESES[D.ant.m-1].toLowerCase()} fueron ${D.pre.ent}</small>`:""}</span><b>${D.act.ent}</b><span></span></div>
-    <div class="fila"><span>Contratos vendidos<small>meta 30% = ${D.meta} · ${okCm?"alcanzada":`faltaron ${Math.max(D.meta-D.act.cm,0)}`} · ${v(D.act.cm,D.pre.cm)}</small></span><b style="color:${okCm?"var(--ok)":"var(--bad)"}">${D.act.cm} · ${D.act.tasa}%</b><span></span></div>
-    <div class="fila"><span>Facturado en contratos<small>ticket promedio ${pesos(D.act.ticket)}</small></span><b>${pesos(D.act.plata)}</b><span></span></div>
-    <div class="fila"><span>Accesorios facturados<small>${D.obj?`objetivo ${mill(D.obj)} · ${cumpl}%`:"objetivo sin cargar"} · ${v(D.act.acc,D.pre.acc)}</small></span><b style="color:${cumpl>=100?"var(--ok)":cumpl>=80?"var(--warn)":"var(--bad)"}">${mill(D.act.acc)}</b><span></span></div>
-    <div class="fila"><span>OR de accesorios<small>ticket promedio ${pesos(D.act.tickAcc)}</small></span><b>${D.act.nOr}</b><span></span></div>
-    <div class="fila"><span>Entregas con accesorios</span><b>${D.act.conAcc} · ${D.act.tasaAcc}%</b><span></span></div>
-    <div class="fila"><span>Contratos en la entrega vs recuperados<small>los recuperados se cerraron llamando</small></span><b>${D.act.cmEnt} / <span style="color:var(--ok)">${D.act.cmPost}</span></b><span></span></div>
-    <div class="fila"><span>Accesorios en la entrega vs recuperados<small>${D.cort.promDias?`el cliente volvió a los ${D.cort.promDias} días en promedio`:"&nbsp;"}</small></span><b>${mill(D.cort.ent.m)} / <span style="color:var(--ok)">${mill(D.cort.post.m)}</span></b><span></span></div>
-  </div>
-
-  <div class="card">
-    <h2>2 · A qué apuntamos en ${sigNom.toLowerCase()} <span>al día de hoy</span></h2>
-    <div class="fila"><span>Unidades sin contrato<small>entregadas y todavía dentro del año</small></span><b>${D.op}</b><span></span></div>
-    <div class="fila"><span>Se les vence el año en ${sigNom.toLowerCase()}<small>último mes para ofrecerles</small></span><b style="color:${D.vencen?"var(--bad)":"var(--ok)"}">${D.vencen}</b><span></span></div>
-    <div class="fila"><span>Entregas sin accesorios<small>${D.opaUlt} con menos de 2 meses de ventana</small></span><b>${D.opa}</b><span></span></div>
-    <div class="fila"><span>Contratos para cumplir el 30%<small>con un volumen como el de ${mes.toLowerCase()}</small></span><b>${D.meta}</b><span></span></div>
-    ${D.obj&&D.act.tickAcc?`<div class="fila"><span>OR necesarias para el objetivo<small>al ticket actual de ${pesos(D.act.tickAcc)}</small></span><b>${Math.ceil(D.obj/D.act.tickAcc)}</b><span></span></div>`:""}
-    ${D.motivos.length?`<h2 style="margin-top:18px">Por qué no compran <span>${mes.toLowerCase()}</span></h2>
-    <div class="rk">${D.motivos.slice(0,6).map(([k,n],i)=>`<div><span><em>${i+1}</em>${esc(k)}</span><b>${n}</b></div>`).join("")}</div>`:""}
-    ${D.mix.length?`<h2 style="margin-top:18px">Accesorios que más se colocaron <span>${mes.toLowerCase()}</span></h2>
-    <div class="rk">${D.mix.slice(0,8).map(([k,n],i)=>`<div><span><em>${i+1}</em>${esc(k)}</span><b>${n}</b></div>`).join("")}</div>`:""}
-  </div>
-
-  <div class="card">
-    <h2>3 · Cómo venimos en el año <span>hasta ${mes.toLowerCase()} · tocá la leyenda para prender o apagar cada línea</span></h2>
-    ${grafCombinado(MES)}
-    <div class="fila" style="margin-top:14px"><span>Entregas acumuladas</span><b>${D.entAnio}</b><span></span></div>
-    <div class="fila"><span>Contratos acumulados<small>tasa del año ${D.tasaAnio}%</small></span><b style="color:${D.tasaAnio>=30?"var(--ok)":"var(--bad)"}">${D.cmAnio}</b><span></span></div>
-    <div class="fila"><span>Accesorios acumulados<small>promedio ${mill(D.prom.acc)} por mes, sobre ${D.meses} ${D.meses===1?"mes":"meses"}</small></span><b>${mill(D.accAnio)}</b><span></span></div>
-    ${D.mejorAcc&&D.mejorAcc.acc?`<div class="fila"><span>Mejor mes en accesorios</span><b>${D.mejorAcc.nom} · ${mill(D.mejorAcc.acc)}</b><span></span></div>`:""}
-    ${D.mejorTasa?`<div class="fila"><span>Mejor mes en tasa de contratos</span><b>${D.mejorTasa.nom} · ${D.mejorTasa.tasa}%</b><span></span></div>`:""}
-  </div>
-
-  <div class="card"><h2>Accesorios mes a mes <span>${ANIO}</span></h2>${chart({
-    grid:{left:6,right:10,top:18,bottom:6,containLabel:true},
-    textStyle:{fontFamily:"var(--body)",color:c.mute},
-    tooltip:{trigger:"axis",backgroundColor:c.fondo,borderColor:c.line,textStyle:{color:c.txt},formatter:p=>p[0].name+"<br><b>"+mill(p[0].value||0)+"</b>"},
-    xAxis:{type:"category",data:MESES.map(m=>m.slice(0,3)),axisLine:{lineStyle:{color:c.line}},axisTick:{show:false},axisLabel:{color:c.mute,fontSize:11}},
-    yAxis:{type:"value",splitLine:{lineStyle:{color:c.split}},axisLabel:{color:c.mute,fontSize:11,formatter:v=>(v/1e6)+"M"}},
-    series:[{type:"bar",data:serieAcc,barMaxWidth:28,itemStyle:{color:c.vw,borderRadius:[4,4,0,0]},
-      markLine:D.obj?{silent:true,symbol:"none",data:[{yAxis:D.obj,label:{formatter:"Objetivo",position:"insideEndTop",fontSize:11,color:"#c23b3b"},lineStyle:{type:"dashed",color:"#c23b3b"}}]}:undefined}]
-  },230)}</div>`;
 }
 
 function render(){
   Q=[];
-  const atras=(ANIO>ANIO_MIN)||(ANIO===ANIO_MIN&&MES>MES_MIN);
-  const alante=(ANIO<ANIO_HOY)||(ANIO===ANIO_HOY&&MES<MES_HOY);
-  const flecha=(d,ok,txt)=>`<button class="mesnav" ${ok?`onclick="moverMes(${d})"`:"disabled"}>${txt}</button>`;
-  $("periodo").innerHTML=
-    flecha(-1,atras,"‹")+
-    `<b>${MESES[MES-1]} ${ANIO}</b>`+
-    flecha(1,alante,"›")+
-    ((MES!==MES_HOY||ANIO!==ANIO_HOY)?`<a href="#" onclick="volverAlMes();return false" class="hoy">volver al mes actual</a>`:"")+
-    `<span class="gen">datos al ${DATA.generado||""}</span>`;
-  $("cuerpo").innerHTML=vista==="hoy"?vHoy():vista==="contratos"?vContratos()
-    :vista==="accesorios"?vAccesorios():vCierre();
+  $("periodo").textContent=`${MESES[MES-1]} ${ANIO} · datos al ${DATA.generado||""}`;
+  $("cuerpo").innerHTML=vista==="hoy"?vHoy():vista==="contratos"?vContratos():vAccesorios();
   pintar();
   $("pie").textContent="Autosol Jujuy · Volkswagen · Pre-Entregas";
 }
-/* Tocar un recuadro filtra la tabla de abajo; tocarlo de nuevo la vuelve a abrir */
-function filtrarCm(p){ vistaCm=(vistaCm===p?"":p); render(); }
-function filtrarAcc(p){ vistaAcc=(vistaAcc===p?"":p); render(); }
-/* Cambia el ranking de accesorios entre el mes y el año entero */
-function verRk(v){ rkAnio=v; render(); }
-
-/* Mover el mes que se está mirando, sin pasarse del mes actual ni del primer dato */
-function moverMes(d){
-  let m=MES+d, a=ANIO;
-  if(m<1){m=12;a--} else if(m>12){m=1;a++}
-  if(a>ANIO_HOY||(a===ANIO_HOY&&m>MES_HOY))return;
-  if(a<ANIO_MIN||(a===ANIO_MIN&&m<MES_MIN))return;
-  MES=m; ANIO=a; vistaCm=""; vistaAcc=""; saltoCierre=0; render();
-}
-function volverAlMes(){ MES=MES_HOY; ANIO=ANIO_HOY; vistaCm=""; vistaAcc=""; saltoCierre=0; render(); }
-
 document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{
-  vista=b.dataset.v; vistaCm=""; vistaAcc="";
-  /* El informe es del mes que cerró. En los primeros días del mes nuevo la
-     pestaña se abre directo en el mes anterior, que es el que hay que mandar;
-     con las flechas de arriba se mira cualquier otro. Al salir de la pestaña,
-     si el salto lo hizo el tablero y no la persona, se vuelve al mes de hoy. */
-  if(vista==="cierre"){
-    if(MES===MES_HOY&&ANIO===ANIO_HOY&&HOY.getDate()<=10){
-      const p=mesAnterior(MES,ANIO);
-      if(p.a>ANIO_MIN||(p.a===ANIO_MIN&&p.m>=MES_MIN)){ MES=p.m; ANIO=p.a; saltoCierre=1; }
-    }
-  } else if(saltoCierre){ MES=MES_HOY; ANIO=ANIO_HOY; saltoCierre=0; }
+  vista=b.dataset.v;
   document.querySelectorAll("#tabs button").forEach(x=>x.classList.toggle("on",x===b));
   render(); window.scrollTo(0,0);
 });
+/* CAPA UI / PRESENTACIÓN — NO ALTERA DATOS NI CONEXIONES.
+   Cierra el cajón lateral al elegir una vista en el celular, y con Escape. */
+(function(){
+  const chk=document.getElementById("chkNav");
+  if(!chk)return;
+  const angosto=window.matchMedia("(max-width:980px)");
+  document.addEventListener("click",e=>{
+    if(e.target.closest("#tabs button")&&angosto.matches)chk.checked=false;
+  },{passive:true});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")chk.checked=false});
+  const q=document.querySelector(".barramovil .q");
+  if(q)document.addEventListener("click",e=>{
+    const b=e.target.closest("#tabs button");
+    // Sin el ícono: textContent lo traería pegado al nombre ("▤Contratos").
+    if(b)q.textContent=(b.lastChild&&b.lastChild.textContent||b.textContent).trim();
+  },{passive:true});
+})();
+
 function cambiarTema(){
   const o=oscuro()?"":"oscuro";
   document.documentElement.dataset.tema=o;
@@ -1274,13 +749,16 @@ async function entrar(){
   e.style.color="var(--mute)"; e.textContent="Verificando…"; b.disabled=true;
   try{
     const j=await pedir(API_URL+"?accion=login&clave="+encodeURIComponent(v));
-    if(!j.ok)throw new Error(j.error==="Clave incorrecta"?"CLAVE":j.error);
+    // Si el servidor contestó, el mensaje es suyo y se muestra tal cual: puede ser
+    // "Clave incorrecta · quedan 2 intentos" o el freno por demasiados intentos.
+    if(!j.ok)throw new Error("SRV:"+(j.error||"Error"));
     localStorage.setItem(TOKEN_KEY,j.token);
     e.textContent=""; $("login").classList.add("hidden"); cargar();
   }catch(ex){
     e.style.color="var(--bad)";
-    e.textContent=ex.message==="CLAVE"?"Clave incorrecta":"No se pudo conectar. Probá de nuevo.";
-    if(ex.message!=="CLAVE")console.error(ex);
+    const delServidor=String(ex.message||"").indexOf("SRV:")===0;
+    e.textContent=delServidor?ex.message.slice(4):"No se pudo conectar. Probá de nuevo.";
+    if(!delServidor)console.error(ex);
     $("pass").value="";
   }finally{b.disabled=false}
 }
