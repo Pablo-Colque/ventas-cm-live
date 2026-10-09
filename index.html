@@ -76,8 +76,24 @@ body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:
 .btn.pri{background:var(--vw);border-color:var(--vw);color:#fff}
 :root[data-tema="oscuro"] .btn.pri{background:var(--acc);border-color:var(--acc);color:#04101f}
 
+/* ── Filtros de período ───────────────────────────────────────────── */
+.filtros{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;
+  background:var(--card);border:1px solid var(--line);border-radius:13px;padding:8px 11px;
+  box-shadow:0 1px 2px rgba(11,31,58,.04)}
+.filtros .et{font-size:10.5px;font-weight:700;letter-spacing:.07em;color:var(--mute);
+  text-transform:uppercase;margin-right:2px}
+.gchip{display:flex;gap:3px;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:3px}
+.chip{all:unset;cursor:pointer;padding:6px 11px;border-radius:8px;font-size:13.5px;font-weight:600;
+  color:var(--ink2);white-space:nowrap;transition:background .13s,color .13s}
+.chip:hover{background:var(--card);color:var(--ink)}
+.chip.on{background:var(--vw);color:#fff}
+:root[data-tema="oscuro"] .chip.on{background:var(--acc);color:#04101f}
+.chip[disabled]{opacity:.32;cursor:default}
+.chip[disabled]:hover{background:transparent;color:var(--ink2)}
+.filtros .sep{width:1px;align-self:stretch;background:var(--line);margin:0 3px}
+
 /* ── Indicadores de arriba ────────────────────────────────────────── */
-.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:16px}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:16px}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:15px 17px;box-shadow:var(--sombra);
   display:flex;flex-direction:column;gap:3px;min-width:0}
 .kpi .et{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.045em;
@@ -86,6 +102,10 @@ body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:
   font-size:13px;background:rgba(15,111,220,.1);color:var(--acc);flex:none}
 .kpi .v{font-family:var(--disp);font-weight:700;font-size:35px;line-height:1.05;margin-top:5px;color:var(--vw)}
 .kpi .d{font-size:12.5px;color:var(--ink2)}
+.kpi .cmp{display:flex;align-items:baseline;gap:6px;margin-top:1px}
+.kpi .cmp b{font-size:12.5px;font-weight:700;color:var(--mute)}
+.kpi .cmp b.up{color:var(--ok)} .kpi .cmp b.dn{color:var(--bad)}
+.kpi .cmp small{font-size:11.5px;color:var(--mute)}
 .kpi .barra{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:8px}
 .kpi .barra i{display:block;height:100%;border-radius:99px}
 
@@ -144,7 +164,8 @@ footer{color:var(--mute);font-size:12px;text-align:center;margin-top:22px}
 #chkNav{position:absolute;opacity:0;pointer-events:none}
 .barramovil,.fondonav{display:none}
 
-@media(max-width:1180px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kpis>:nth-child(3){grid-column:span 2}}
 @media(max-width:980px){
   .app{grid-template-columns:minmax(0,1fr);background:none}
   .rail{position:fixed;top:0;left:0;bottom:0;width:272px;height:100dvh;z-index:60;
@@ -159,6 +180,10 @@ footer{color:var(--mute);font-size:12px;text-align:center;margin-top:22px}
   .barramovil .q{font-family:var(--disp);font-weight:700;font-size:19px;color:var(--vw);line-height:1.1;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .main{padding:14px 13px 48px}
+  .filtros{gap:6px;padding:7px 9px;overflow-x:auto;flex-wrap:nowrap;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .filtros::-webkit-scrollbar{display:none}
+  .gchip{flex:none}
   .top h1{font-size:24px}
   .par{grid-template-columns:minmax(0,1fr)}
 }
@@ -171,7 +196,8 @@ footer{color:var(--mute);font-size:12px;text-align:center;margin-top:22px}
   .meta .aro{width:78px;height:78px}
   .acciones .btn{font-size:12.5px;padding:8px 11px}
 }
-@media(max-width:380px){.kpis{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:380px){.kpis{grid-template-columns:minmax(0,1fr)}
+  .kpis>:nth-child(3){grid-column:auto}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* ── Impresión: siempre claro, sin controles, solo la vista actual ── */
@@ -179,7 +205,7 @@ footer{color:var(--mute);font-size:12px;text-align:center;margin-top:22px}
 @media print{
   html,body{background:#fff!important;color:#0b1f3a!important;overflow:visible!important}
   body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-  .rail,.barramovil,.fondonav,.acciones,.login,#chkNav{display:none!important}
+  .rail,.barramovil,.fondonav,.acciones,.login,#chkNav,.filtros{display:none!important}
   .app{display:block!important}
   .main{padding:0!important;max-width:none!important}
   .top{margin-bottom:4mm!important;border-bottom:1px solid #d9e1ea;padding-bottom:3mm}
@@ -247,6 +273,7 @@ footer{color:var(--mute);font-size:12px;text-align:center;margin-top:22px}
         </div>
       </div>
 
+      <div class="filtros" id="filtros"></div>
       <div id="cuerpo"></div>
       <footer id="pie"></footer>
     </main>
@@ -320,9 +347,29 @@ const HOY=new Date(); HOY.setHours(0,0,0,0);
 const dDesde=d=>d?Math.floor((HOY-new Date(d+"T00:00:00"))/864e5):null;
 
 let JAV=[],ACP=[],ACC=[],ACV=[],ENT=[],MES,ANIO;
+/* MODO: "mes" mira un mes solo · "anio" acumula todo el año elegido.
+   ULT guarda la última fecha que trajo el dato, que NO es lo mismo que el período
+   elegido: sirve para saber si el período todavía está en curso y para cortar
+   parejo la comparación contra el año pasado. */
+let MODO="mes", ULT="";
 let ACC_POR_VIN={}, OR_DE_ENTREGA={}, ENTREGA_POR_VIN={};
 const CANAL_BASE=["VENTA TRADICIONAL","PLANES DE AHORRO","V. CORPORATIVA"];
-const enMes=d=>d&&+d.slice(0,4)===ANIO&&+d.slice(5,7)===MES;
+const enMes=d=>d&&+d.slice(0,4)===ANIO&&(MODO==="anio"||+d.slice(5,7)===MES);
+/* El mismo período del año pasado. Si el período elegido todavía está en curso,
+   del año anterior se toma solo hasta el mismo día: comparar un mes entero contra
+   nueve días daría una caída que no existe. */
+const enMesA=d=>{
+  if(!d||+d.slice(0,4)!==ANIO-1)return false;
+  if(MODO==="mes"&&+d.slice(5,7)!==MES)return false;
+  const enCurso=ULT&&ANIO===+ULT.slice(0,4)&&(MODO==="anio"||MES===+ULT.slice(5,7));
+  return enCurso?d.slice(5)<=ULT.slice(5):true;
+};
+/* Los años que realmente trajo el dato. No se inventa ninguno. */
+/* Cómo se llama el período elegido, para los títulos de las tarjetas: decir
+   "de octubre" mientras se muestra el año entero sería mentir. */
+const rotulo=()=>MODO==="anio"?String(ANIO):MESES[MES-1].toLowerCase();
+const aniosDato=()=>[...new Set([...ENT.map(r=>r.f),...JAV.map(r=>r.fac),...ACP.map(r=>r.f)]
+  .filter(Boolean).map(f=>+f.slice(0,4)))].sort((a,b)=>a-b);
 
 function preparar(){
   JAV=(DATA.javier||[]).map(r=>({ent:r[0],fac:r[1],comprado:r[2],precio:r[3],motivo:(r[4]||"").trim(),mom:r[5],vin:r[6],mod:r[7]||"Sin dato"}));
@@ -345,7 +392,10 @@ function preparar(){
   ACV.forEach(x=>{ if(!x.vin)return; (ACC_POR_VIN[x.vin]=ACC_POR_VIN[x.vin]||[]).push(x) });
   ENT.forEach(r=>{ if(r.accOr)OR_DE_ENTREGA[r.accOr]=r.f; if(r.vin)ENTREGA_POR_VIN[r.vin]=r.f });
   const ult=[...ENT.map(r=>r.f),...JAV.map(r=>r.fac).filter(Boolean)].sort().pop()||new Date().toISOString().slice(0,10);
-  ANIO=+ult.slice(0,4); MES=+ult.slice(5,7);
+  ULT=ult;
+  /* Solo la primera carga arranca en el último mes con datos. Si el usuario ya
+     eligió otro período, un refresco no se lo pisa. */
+  if(ANIO===undefined){ ANIO=+ult.slice(0,4); MES=+ult.slice(5,7); }
 }
 
 /* ═══ VENTANAS DE OPORTUNIDAD ═══
@@ -468,10 +518,14 @@ function aro(valor,color){
 /* Barras + las dos tasas superpuestas, cada una se puede prender y apagar */
 function grafCombinado(){
   const c=C();
+  /* Las dos barras salen de la MISMA hoja, ENTR.: cada entrega del mes y si esa
+     entrega llevó contrato (columna C.M.). Antes las entregas salían de ENTR. y los
+     contratos de la planilla de Javier por fecha de factura, y como el contrato se
+     factura a veces el mes siguiente, los dos pedazos no eran de las mismas unidades.
+     Leyendo las dos cosas de la misma fila eso no puede pasar. */
   const ventas=new Array(12).fill(0), base=new Array(12).fill(0), conAcc=new Array(12).fill(0);
   ENT.forEach(r=>{ if(+r.f.slice(0,4)!==ANIO)return; const m=+r.f.slice(5,7)-1;
-    if(CANAL_BASE.includes(r.canal)){base[m]++; } if(r.acc)conAcc[m]++; });
-  JAV.filter(x=>x.comprado===1&&x.fac&&+x.fac.slice(0,4)===ANIO).forEach(x=>ventas[+x.fac.slice(5,7)-1]++);
+    if(CANAL_BASE.includes(r.canal)){ base[m]++; if(r.cm)ventas[m]++; } if(r.acc)conAcc[m]++; });
   const tCm=base.map((b,i)=>b?Math.round(ventas[i]/b*100):null);
   const tAc=base.map((b,i)=>b?Math.round(conAcc[i]/b*100):null);
   return chart({
@@ -488,13 +542,12 @@ function grafCombinado(){
       /* Barra apilada: el alto total es LAS ENTREGAS del mes, partidas en las que
          llevaron contrato y las que no. Antes la barra mostraba solo los contratos
          vendidos, así que no se veía sobre cuántas entregas se consiguieron.
-         Los dos pedazos salen de los mismos arreglos que ya se usaban para la tasa:
-         ventas[] y base[]. El resto se topa en cero porque un contrato se factura a
-         veces en un mes posterior a la entrega, y ahí ventas puede superar a base. */
+         Los dos pedazos salen de la misma hoja y de la misma fila, así que suman
+         siempre las entregas del mes y el resto nunca puede dar negativo. */
       {name:"Con contrato",type:"bar",stack:"ent",data:ventas,barMaxWidth:30,
         itemStyle:{color:c.vw}},
       {name:"Sin contrato",type:"bar",stack:"ent",barMaxWidth:30,
-        data:base.map((b,i)=>Math.max(0,b-ventas[i])),
+        data:base.map((b,i)=>b-ventas[i]),
         itemStyle:{color:oscuro()?"#22395c":"#dbe3ee",borderRadius:[4,4,0,0]}},
       {name:"Tasa contratos",type:"line",yAxisIndex:1,data:tCm,smooth:true,symbolSize:7,connectNulls:true,
         lineStyle:{width:3,color:c.acc},itemStyle:{color:c.acc},
@@ -559,27 +612,51 @@ function vHoy(){
     .sort((a,b)=>ordenP(a)-ordenP(b)||(dDesde(b.ent)||0)-(dDesde(a.ent)||0));
   const accUrg=oportAcc().filter(x=>[P_ULT,P_AHORA].includes(prioridadAcc(x.d)));
 
+  /* ── El mismo período, del año pasado ──────────────────────────────
+     Mismas cuentas, otras fechas. Si el período está en curso, enMesA corta el
+     año anterior al mismo día, así la comparación es pareja. */
+  const baseA=ENT.filter(r=>enMesA(r.f)&&CANAL_BASE.includes(r.canal)).length;
+  const vendA=JAV.filter(x=>x.comprado===1&&enMesA(x.fac));
+  const plataA=vendA.reduce((s,x)=>s+x.precio,0);
+  const accA=ACP.filter(x=>enMesA(x.f)).reduce((s,x)=>s+x.t,0);
+  const tCmA=baseA?Math.round(vendA.length/baseA*100):null;
+  const hayA=baseA||vendA.length||accA;
+
+  /* Comparación: en puntos para las tasas, en porcentaje para la plata.
+     Si el año pasado no hay nada cargado, se dice, no se inventa un 0%. */
+  const vs=(hoy,antes,puntos)=>{
+    if(antes===null||antes===undefined||(!antes&&!puntos))
+      return `<span class="cmp"><small>sin dato del año pasado</small></span>`;
+    const d=puntos?hoy-antes:(antes?Math.round((hoy-antes)/Math.abs(antes)*100):0);
+    const cl=d>0?"up":d<0?"dn":"";
+    const txt=puntos?`${d>0?"+":""}${d} pts`:`${d>0?"▲":d<0?"▼":"="} ${Math.abs(d)}%`;
+    return `<span class="cmp"><b class="${cl}">${txt}</b><small>vs. ${ANIO-1}</small></span>`;
+  };
+
   /* Fila de indicadores. No calcula nada nuevo: muestra en grande los mismos
-     valores que ya están arriba, para que de un vistazo se vea cómo viene el mes. */
-  const llamar = urgentes.length + accUrg.length;
-  const kpi = (ic,et,v,d,pct,col) => `<div class="kpi">
+     valores que ya están arriba, para que de un vistazo se vea cómo viene. */
+  const kpi = (ic,et,v,d,pct,col,cmp) => `<div class="kpi">
     <div class="et"><i>${ic}</i>${et}</div>
     <div class="v"${col?` style="color:${col}"`:""}>${v}</div>
+    ${cmp||""}
     <div class="d">${d}</div>
     ${pct===null?"":`<div class="barra"><i style="width:${Math.max(2,Math.min(100,pct))}%;background:${col||"var(--acc)"}"></i></div>`}
   </div>`;
 
   return `
   <div class="kpis">
-    ${kpi("%","Tasa de contratos",tCm+"%",`${vendidos.length} de ${base} entregas · meta 30%`,Math.round(tCm/30*100),colCm)}
-    ${kpi("$","Facturado en contratos",pesos(plata),vendidos.length?`ticket promedio ${pesos(ticket)}`:"sin contratos en el mes",null,null)}
-    ${kpi("✦","Accesorios",mill(accM),objAcc?`${cumplAcc}% del objetivo de ${mill(objAcc)}`:`${orMes.length} OR · objetivo sin cargar`,objAcc?cumplAcc:null,colAcc)}
-    ${kpi("☎","Para llamar hoy",llamar,llamar?`${urgentes.length} contratos · ${accUrg.length} accesorios`:"nada urgente por ahora",null,llamar?"var(--warn)":"var(--ok)")}
+    ${kpi("%","Tasa de contratos",tCm+"%",`${vendidos.length} de ${base} entregas · meta 30%`,Math.round(tCm/30*100),colCm,
+          hayA?vs(tCm,tCmA,true):"")}
+    ${kpi("$","Facturado en contratos",pesos(plata),vendidos.length?`ticket promedio ${pesos(ticket)}`:"sin contratos en el período",null,null,
+          hayA?vs(plata,plataA,false):"")}
+    ${kpi("✦","Accesorios",mill(accM),objAcc?`${cumplAcc}% del objetivo de ${mill(objAcc)}`:`${orMes.length} OR · objetivo sin cargar`,objAcc?cumplAcc:null,colAcc,
+          hayA?vs(accM,accA,false):"")}
+
   </div>
 
   <div class="par" style="margin-bottom:14px">
     <div class="card">
-      <h2>Contratos de ${MESES[MES-1].toLowerCase()} <span>meta 30%</span></h2>
+      <h2>Contratos de ${rotulo()} <span>meta 30%</span></h2>
       <div class="meta">${aro(tCm,colCm)}
         <div><div class="n" style="color:${colCm}">${tCm}%</div>
           <div class="t">${vendidos.length} vendidos sobre ${base} entregas</div>
@@ -589,7 +666,7 @@ function vHoy(){
     </div>
 
     <div class="card">
-      <h2>Accesorios de ${MESES[MES-1].toLowerCase()} <span>objetivo ${objAcc?mill(objAcc):"sin cargar"}</span></h2>
+      <h2>Accesorios de ${rotulo()} <span>objetivo ${objAcc?mill(objAcc):"sin cargar"}</span></h2>
       <div class="meta">${aro(cumplAcc,colAcc)}
         <div><div class="n" style="color:${colAcc}">${cumplAcc}%</div>
           <div class="t">${mill(accM)} facturados en ${orMes.length} OR</div>
@@ -598,6 +675,7 @@ function vHoy(){
     </div>
   </div>
 
+  ${MODO==="anio"?"":`
   <div class="card" style="border-left:4px solid var(--acc)">
     <h2>Cómo cerraría el mes <span>${R.restan>0?`quedan ${R.restan} días`:"mes cerrado"}</span></h2>
     <p style="font-size:13px;color:var(--ink2);margin-bottom:8px">Si el resto del mes sigue al ritmo de estos ${R.hoyDia} días.</p>
@@ -608,24 +686,22 @@ function vHoy(){
       ${faltanCm?`· ${faltanCm} contrato${faltanCm>1?"s":""} más${R.restan>0?` — ${(faltanCm/Math.max(R.restan,1)).toFixed(1)} por día`:""}<br>`:""}
       ${faltanAcc?`· ${mill(faltanAcc)} en accesorios${orFaltan?` — unas ${orFaltan} OR al ticket actual de ${pesos(tickAcc)}`:""}`:""}
     </p>`:`<p style="margin-top:10px;font-size:14px;color:var(--ok)"><b>Vas arriba de los dos objetivos 👏</b></p>`}
-  </div>
+  </div>`}
 
-  ${urgentes.length?`<div class="card" style="border-left:4px solid var(--ok)">
-    <h2>📞 Contratos: empezá por estos <span>${urgentes.length} de ${pend.length} pendientes</span></h2>
-    <p style="font-size:13px;color:var(--ink2);margin-bottom:8px">🔥 son los que están por cumplir el año — después ya no se puede ofrecer. Próximo cierre de tarjeta: ${fdia(CIERRE.toISOString().slice(0,10))}.</p>
-    ${tabla(urgentes.slice(0,8))}
-    <p style="margin-top:8px;font-size:13px;color:var(--mute)">La lista completa está en la pestaña Contratos.</p>
-  </div>`:`<div class="card"><h2>📞 Contratos</h2><div class="vacio">Nada urgente por ahora.</div></div>`}
+  ${(urgentes.length||accUrg.length)?`<div class="card" style="border-left:4px solid var(--acc)">
+    <h2>Para llamar hoy</h2>
+    <div class="fila" style="cursor:pointer" onclick="irVista('contratos')">
+      <span>Contratos por vencer<small>de ${pend.length} pendientes en total</small></span>
+      <b style="color:${urgentes.length?"var(--warn)":"var(--ok)"}">${urgentes.length}</b><span>›</span></div>
+    <div class="fila" style="cursor:pointer" onclick="irVista('accesorios')">
+      <span>Entregas sin accesorios<small>todavía dentro del año</small></span>
+      <b style="color:${accUrg.length?"var(--warn)":"var(--ok)"}">${accUrg.length}</b><span>›</span></div>
+    <p style="margin-top:9px;font-size:13px;color:var(--mute)">Tocá cualquiera de las dos para abrir la lista. Próximo cierre de tarjeta: ${fdia(CIERRE.toISOString().slice(0,10))}.</p>
+  </div>`:`<div class="card"><h2>Para llamar hoy</h2><div class="vacio">Nada urgente por ahora.</div></div>`}
 
-  ${accUrg.length?`<div class="card" style="border-left:4px solid var(--acc)">
-    <h2>🔧 Accesorios: oportunidades <span>${accUrg.length} entregas sin accesorios</span></h2>
-    ${tablaAcc(accUrg.slice(0,8))}
-    <p style="margin-top:8px;font-size:13px;color:var(--mute)">La lista completa está en la pestaña Accesorios.</p>
-  </div>`:""}
+  ${MODO==="anio"?"":racha()}
 
-  ${racha()}
-
-  <div class="card"><h2>Cómo venís en el año <span>tocá la leyenda para prender o apagar cada línea</span></h2>${grafCombinado()}</div>`;
+  <div class="card"><h2>Cómo venís en el año <span>entregas y contratos de la hoja ENTR. · tocá la leyenda para prender o apagar cada línea</span></h2>${grafCombinado()}</div>`;
 }
 
 function tabla(arr){
@@ -654,7 +730,7 @@ function vContratos(){
   const recup=vendidos.length-enEnt;
   const cuenta=p=>pend.filter(x=>prioridad(x)===p).length;
   return `
-  <div class="card"><h2>Vendidos en ${MESES[MES-1].toLowerCase()}</h2>
+  <div class="card"><h2>Vendidos en ${rotulo()}</h2>
     <div class="fila"><span>Contratos<small>${enEnt} en la entrega · ${recup} post entrega</small></span><b>${vendidos.length}</b><span></span></div>
     <div class="fila"><span>Recuperados post entrega<small>los que se cerraron llamando</small></span><b style="color:var(--ok)">${recup}</b><span></span></div>
     <div class="fila"><span>Facturado</span><b>${pesos(vendidos.reduce((s,x)=>s+x.precio,0))}</b><span></span></div>
@@ -682,7 +758,7 @@ function vAccesorios(){
   const serie=new Array(12).fill(null);
   ACP.forEach(x=>{if(+x.f.slice(0,4)===ANIO){const m=+x.f.slice(5,7)-1;serie[m]=(serie[m]||0)+x.t}});
   return `
-  <div class="card"><h2>Facturación de ${MESES[MES-1].toLowerCase()} <span>${delMes.length} OR facturadas</span></h2>
+  <div class="card"><h2>Facturación de ${rotulo()} <span>${delMes.length} OR facturadas</span></h2>
     <div class="fila"><span>Facturado<small>objetivo ${obj?mill(obj):"sin cargar"}</small></span><b>${pesos(total)}</b><span></span></div>
     <div class="fila"><span>Ticket promedio por OR</span><b>${delMes.length?pesos(total/delMes.length):"—"}</b><span></span></div>
   </div>
@@ -694,11 +770,11 @@ function vAccesorios(){
     yAxis:{type:"value",splitLine:{lineStyle:{color:c.split}},axisLabel:{color:c.mute,fontSize:11,formatter:v=>(v/1e6)+"M"}},
     series:[{type:"bar",data:serie,barMaxWidth:28,itemStyle:{color:c.vw,borderRadius:[4,4,0,0]}}]
   },230)}</div>
-  <div class="card"><h2>Lo que más se coloca <span>${MESES[MES-1].toLowerCase()}</span></h2>
+  <div class="card"><h2>Lo que más se coloca <span>${rotulo()}</span></h2>
     <div class="rk">${rk.length?rk.map(([k,v],i)=>`<div><span><em>${i+1}</em>${esc(k)}</span><b>${v}</b></div>`).join(""):'<div class="vacio">Sin datos del mes.</div>'}</div>
   </div>
   ${(()=>{const c=cortesAcc(); if(!c.ent.n&&!c.post.n&&!c.sin.n)return "";
-    return `<div class="card"><h2>Cómo se vendieron <span>${MESES[MES-1].toLowerCase()}</span></h2>
+    return `<div class="card"><h2>Cómo se vendieron <span>${rotulo()}</span></h2>
     <div class="fila"><span>En la entrega<small>${c.ent.n} OR</small></span><b>${pesos(c.ent.m)}</b><span></span></div>
     <div class="fila"><span>Recuperados post entrega<small>${c.post.n} OR${c.promDias?` · el cliente volvió a los ${c.promDias} días en promedio`:""}</small></span><b style="color:var(--ok)">${pesos(c.post.m)}</b><span></span></div>
     ${c.sin.n?`<p style="margin-top:10px;font-size:13px;color:var(--mute)">${c.sin.n} OR sin clasificar (${pesos(c.sin.m)}): todavía no llegan el N° de orden y el chasis desde la hoja OR.</p>`:""}
@@ -716,9 +792,40 @@ function vAccesorios(){
   </div>`;
 }
 
+/* Barra de período. Solo elige SOBRE QUÉ FECHAS se calcula; no cambia ninguna
+   cuenta. Los años que ofrece son los que vinieron en el dato, ni uno más. */
+function barraFiltros(){
+  const anios=aniosDato();
+  const mesTope=a=>(ULT&&a===+ULT.slice(0,4))?+ULT.slice(5,7):12;
+  const chip=(txt,activo,fn,off)=>`<button class="chip${activo?" on":""}"${off?" disabled":""}${off?"":` onclick="${fn}"`}>${txt}</button>`;
+  return `<span class="et">Período</span>
+    <div class="gchip">
+      ${chip("Mes",MODO==="mes",'verPeriodo("mes")')}
+      ${chip("Acumulado año",MODO==="anio",'verPeriodo("anio")')}
+    </div>
+    ${anios.length>1?`<div class="sep"></div><div class="gchip">
+      ${anios.map(a=>chip(a,a===ANIO,`verAnio(${a})`)).join("")}
+    </div>`:""}
+    ${MODO==="mes"?`<div class="sep"></div><div class="gchip">
+      ${MESES.map((m,i)=>chip(m.slice(0,3),i+1===MES,`verMes(${i+1})`,i+1>mesTope(ANIO))).join("")}
+    </div>`:""}`;
+}
+/* CAPA UI / PRESENTACIÓN: cambia de pestaña igual que si se tocara el botón. */
+function irVista(v){ const b=document.querySelector(`#tabs button[data-v="${v}"]`); if(b)b.click() }
+function verPeriodo(m){ MODO=m; render(); window.scrollTo(0,0) }
+function verAnio(a){
+  ANIO=a;
+  // Si el mes elegido todavía no existe en ese año, se cae al último con datos.
+  if(ULT&&a===+ULT.slice(0,4)&&MES>+ULT.slice(5,7))MES=+ULT.slice(5,7);
+  render(); window.scrollTo(0,0);
+}
+function verMes(m){ MES=m; MODO="mes"; render(); window.scrollTo(0,0) }
+
 function render(){
   Q=[];
-  $("periodo").textContent=`${MESES[MES-1]} ${ANIO} · datos al ${DATA.generado||""}`;
+  $("filtros").innerHTML=barraFiltros();
+  $("periodo").textContent=(MODO==="anio"?`Acumulado ${ANIO}`:`${MESES[MES-1]} ${ANIO}`)+
+    ` · datos al ${DATA.generado||""}`;
   $("cuerpo").innerHTML=vista==="hoy"?vHoy():vista==="contratos"?vContratos():vAccesorios();
   pintar();
   $("pie").textContent="Autosol Jujuy · Volkswagen · Pre-Entregas";
