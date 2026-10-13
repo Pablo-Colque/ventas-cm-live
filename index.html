@@ -797,11 +797,13 @@ function vAccesorios(){
 function barraFiltros(){
   const anios=aniosDato();
   const mesTope=a=>(ULT&&a===+ULT.slice(0,4))?+ULT.slice(5,7):12;
+  // El onclick va entre comillas dobles: lo de adentro tiene que ir con simples.
+  // Con dobles el atributo se corta y el botón no hace nada.
   const chip=(txt,activo,fn,off)=>`<button class="chip${activo?" on":""}"${off?" disabled":""}${off?"":` onclick="${fn}"`}>${txt}</button>`;
   return `<span class="et">Período</span>
     <div class="gchip">
-      ${chip("Mes",MODO==="mes",'verPeriodo("mes")')}
-      ${chip("Acumulado año",MODO==="anio",'verPeriodo("anio")')}
+      ${chip("Mes",MODO==="mes","verPeriodo('mes')")}
+      ${chip("Acumulado año",MODO==="anio","verPeriodo('anio')")}
     </div>
     ${anios.length>1?`<div class="sep"></div><div class="gchip">
       ${anios.map(a=>chip(a,a===ANIO,`verAnio(${a})`)).join("")}
