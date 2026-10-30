@@ -93,7 +93,10 @@ body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:
 .filtros .sep{width:1px;align-self:stretch;background:var(--line);margin:0 3px}
 
 /* ── Indicadores de arriba ────────────────────────────────────────── */
-.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:16px}
+/* Dos columnas: contratos a la izquierda, accesorios a la derecha, en las dos
+   filas. Así se lee para abajo (cómo vengo / cuánta plata) y para el costado
+   (contrato contra accesorio) sin tener que buscar. */
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-bottom:16px}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:15px 17px;box-shadow:var(--sombra);
   display:flex;flex-direction:column;gap:3px;min-width:0}
 .kpi .et{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.045em;
@@ -164,8 +167,7 @@ footer{color:var(--mute);font-size:12px;text-align:center;margin-top:22px}
 #chkNav{position:absolute;opacity:0;pointer-events:none}
 .barramovil,.fondonav{display:none}
 
-@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .kpis>:nth-child(3){grid-column:span 2}}
+@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:980px){
   .app{grid-template-columns:minmax(0,1fr);background:none}
   .rail{position:fixed;top:0;left:0;bottom:0;width:272px;height:100dvh;z-index:60;
@@ -192,6 +194,9 @@ footer{color:var(--mute);font-size:12px;text-align:center;margin-top:22px}
   .kpi{padding:12px 13px;border-radius:13px}
   .kpi .v{font-size:27px}
   .card{padding:14px 15px;border-radius:13px}
+  /* En el celular el título y su aclaración no entran en la misma línea: puestos
+     uno al lado del otro el título se partía en cuatro renglones. */
+  .card h2{flex-direction:column;align-items:flex-start;gap:2px}
   .meta .n{font-size:38px}
   .meta .aro{width:78px;height:78px}
   .acciones .btn{font-size:12.5px;padding:8px 11px}
@@ -525,7 +530,12 @@ function grafCombinado(){
      Leyendo las dos cosas de la misma fila eso no puede pasar. */
   const ventas=new Array(12).fill(0), base=new Array(12).fill(0), conAcc=new Array(12).fill(0);
   ENT.forEach(r=>{ if(+r.f.slice(0,4)!==ANIO)return; const m=+r.f.slice(5,7)-1;
-    if(CANAL_BASE.includes(r.canal)){ base[m]++; if(r.cm)ventas[m]++; } if(r.acc)conAcc[m]++; });
+    /* Los accesorios se cuentan dentro del mismo filtro de canal que las entregas.
+       Antes se contaban sobre TODAS las filas y la base solo sobre los tres canales
+       de venta, así que la tasa de accesorios se calculaba sobre dos universos
+       distintos y podía pasarse del 100%. Ahora el numerador y el denominador
+       salen de la misma fila, igual que la tasa de contratos. */
+    if(CANAL_BASE.includes(r.canal)){ base[m]++; if(r.cm)ventas[m]++; if(r.acc)conAcc[m]++; } });
   const tCm=base.map((b,i)=>b?Math.round(ventas[i]/b*100):null);
   const tAc=base.map((b,i)=>b?Math.round(conAcc[i]/b*100):null);
   return chart({
@@ -533,7 +543,10 @@ function grafCombinado(){
     textStyle:{fontFamily:"var(--body)",color:c.mute},
     tooltip:{trigger:"axis",backgroundColor:c.fondo,borderColor:c.line,textStyle:{color:c.txt},
       formatter:p=>p[0].name+"<br>"+p.map(x=>`${x.marker}${x.seriesName}: <b>${x.value===null?"—":(x.seriesType==="line"?x.value+"%":x.value)}</b>`).join("<br>")},
-    legend:{bottom:0,icon:"roundRect",itemWidth:11,itemHeight:11,textStyle:{fontSize:12,color:c.mute},
+    /* itemGap generoso: con cuatro series y el render en SVG, el texto de una
+       se montaba sobre el cuadradito de la siguiente y no se entendía cuál era cuál. */
+    legend:{bottom:0,icon:"roundRect",itemWidth:11,itemHeight:11,itemGap:18,
+      textStyle:{fontSize:12,color:c.mute},
       selected:{"Con contrato":true,"Sin contrato":true,"Tasa contratos":true,"Tasa accesorios":true}},
     xAxis:{type:"category",data:MESES.map(m=>m.slice(0,3)),axisLine:{lineStyle:{color:c.line}},axisTick:{show:false},axisLabel:{color:c.mute,fontSize:11}},
     yAxis:[{type:"value",splitLine:{lineStyle:{color:c.split}},axisLabel:{color:c.mute,fontSize:11}},
@@ -551,7 +564,7 @@ function grafCombinado(){
         itemStyle:{color:oscuro()?"#22395c":"#dbe3ee",borderRadius:[4,4,0,0]}},
       {name:"Tasa contratos",type:"line",yAxisIndex:1,data:tCm,smooth:true,symbolSize:7,connectNulls:true,
         lineStyle:{width:3,color:c.acc},itemStyle:{color:c.acc},
-        markLine:{silent:true,symbol:"none",data:[{yAxis:30,label:{formatter:"Meta 30%",fontSize:11,color:"#c23b3b"},lineStyle:{type:"dashed",color:"#c23b3b"}}]}},
+        markLine:{silent:true,symbol:"none",data:[{yAxis:30,label:{formatter:"Meta 30%",position:"insideEndTop",fontSize:11,color:"#c23b3b"},lineStyle:{type:"dashed",color:"#c23b3b"}}]}},
       {name:"Tasa accesorios",type:"line",yAxisIndex:1,data:tAc,smooth:true,symbolSize:7,connectNulls:true,
         lineStyle:{width:3,color:"#1f8a5b"},itemStyle:{color:"#1f8a5b"}}
     ]
@@ -579,6 +592,37 @@ function racha(){
     <p style="margin-top:10px;font-size:14px;color:var(--ink2)">Vendiste algo en <b>${conVenta}</b> de los ${hoyDia} días transcurridos${mejor>1?` · mejor racha: <b>${mejor} días seguidos</b>`:""}.</p></div>`;
 }
 
+/* Calendario anual: un cuadradito por día, más oscuro cuantas más entregas hubo.
+   Es el mismo cuadro del tablero de Pre-Entregas, leyendo el dato de acá.
+   La racha de arriba muestra el mes elegido; esto muestra el año entero, así se
+   ve de un vistazo dónde se juntó el trabajo y dónde quedó flojo. El día cuenta
+   las entregas de los tres canales de venta, la misma base que las tasas. */
+function calendario(h=210){
+  const c=C(), ent={}, cm={};
+  ENT.forEach(r=>{
+    if(!r.f||+r.f.slice(0,4)!==ANIO||!CANAL_BASE.includes(r.canal))return;
+    ent[r.f]=(ent[r.f]||0)+1; if(r.cm)cm[r.f]=(cm[r.f]||0)+1;
+  });
+  const datos=Object.entries(ent);
+  if(!datos.length)return `<div class="vacio">Todavía no hay entregas cargadas en ${ANIO}.</div>`;
+  const mx=Math.max(1,...datos.map(x=>x[1]));
+  return chart({
+    textStyle:{fontFamily:"var(--body)",color:c.mute},
+    tooltip:{trigger:"item",backgroundColor:c.fondo,borderColor:c.line,textStyle:{color:c.txt},
+      formatter:p=>`${fdia(p.data[0])}<br><b>${p.data[1]}</b> entrega${p.data[1]===1?"":"s"} · <b>${cm[p.data[0]]||0}</b> con contrato`},
+    visualMap:{min:0,max:mx,orient:"horizontal",left:"center",bottom:0,itemWidth:12,itemHeight:90,
+      textStyle:{color:c.mute,fontSize:11},
+      inRange:{color:oscuro()?["#16283f","#2b5c9e","#5aa7ff"]:["#eef1f6","#9cc0f4","#001e50"]}},
+    calendar:{top:24,left:34,right:14,cellSize:["auto",14],range:String(ANIO),
+      itemStyle:{borderWidth:2,borderColor:c.fondo,color:oscuro()?"#132540":"#f7f9fc"},
+      splitLine:{show:false},
+      dayLabel:{nameMap:["D","L","M","M","J","V","S"],color:c.mute,fontSize:10},
+      monthLabel:{nameMap:MESES.map(x=>x.slice(0,3)),color:c.mute,fontSize:11},
+      yearLabel:{show:false}},
+    series:[{type:"heatmap",coordinateSystem:"calendar",data:datos}]
+  },h);
+}
+
 /* ═══ VISTAS ═══ */
 function vHoy(){
   const base=ENT.filter(r=>enMes(r.f)&&CANAL_BASE.includes(r.canal)).length;
@@ -596,6 +640,14 @@ function vHoy(){
   const colCm=tCm>=30?"var(--ok)":tCm>=24?"var(--warn)":"var(--bad)";
   const cumplAcc=objAcc?Math.round(accM/objAcc*100):0;
   const colAcc=cumplAcc>=100?"var(--ok)":cumplAcc>=80?"var(--warn)":"var(--bad)";
+  /* Tasa de accesorios: de cada 100 entregas, cuántas salieron con algo puesto.
+     Misma base y mismo filtro de canal que la tasa de contratos, para que las dos
+     tarjetas de arriba y las dos líneas del gráfico del año den siempre el mismo
+     número. No tiene meta fijada, así que no se pinta de rojo: va en el verde con
+     el que aparece en el gráfico, y la de contratos en el azul de su línea. */
+  const conAcc=ENT.filter(r=>enMes(r.f)&&CANAL_BASE.includes(r.canal)&&r.acc).length;
+  const tAc=base?Math.round(conAcc/base*100):0;
+  const TONO_CM=C().acc, TONO_AC="#1f8a5b";
 
   /* Proyección: si el mes sigue al ritmo de hoy */
   const R=ritmo(1);
@@ -620,6 +672,8 @@ function vHoy(){
   const plataA=vendA.reduce((s,x)=>s+x.precio,0);
   const accA=ACP.filter(x=>enMesA(x.f)).reduce((s,x)=>s+x.t,0);
   const tCmA=baseA?Math.round(vendA.length/baseA*100):null;
+  const conAccA=ENT.filter(r=>enMesA(r.f)&&CANAL_BASE.includes(r.canal)&&r.acc).length;
+  const tAcA=baseA?Math.round(conAccA/baseA*100):null;
   const hayA=baseA||vendA.length||accA;
 
   /* Comparación: en puntos para las tasas, en porcentaje para la plata.
@@ -633,51 +687,46 @@ function vHoy(){
     return `<span class="cmp"><b class="${cl}">${txt}</b><small>vs. ${ANIO-1}</small></span>`;
   };
 
-  /* Fila de indicadores. No calcula nada nuevo: muestra en grande los mismos
-     valores que ya están arriba, para que de un vistazo se vea cómo viene. */
-  const kpi = (ic,et,v,d,pct,col,cmp) => `<div class="kpi">
-    <div class="et"><i>${ic}</i>${et}</div>
+  /* Las cuatro tarjetas de arriba. "tono" es el color con el que ese concepto
+     aparece en el gráfico del año: azul el contrato, verde el accesorio. Que el
+     cuadradito del título sea del mismo color que la línea de abajo evita tener
+     que buscar en la leyenda cuál es cuál. */
+  const kpi = (ic,et,v,d,pct,col,cmp,tono) => `<div class="kpi">
+    <div class="et"><i${tono?` style="background:${tono}1f;color:${tono}"`:""}>${ic}</i>${et}</div>
     <div class="v"${col?` style="color:${col}"`:""}>${v}</div>
     ${cmp||""}
     <div class="d">${d}</div>
     ${pct===null?"":`<div class="barra"><i style="width:${Math.max(2,Math.min(100,pct))}%;background:${col||"var(--acc)"}"></i></div>`}
   </div>`;
 
+  /* El detalle de cada tarjeta: de dónde sale el número y qué falta. Sin esto
+     un "28%" no dice nada, y era lo que obligaba a repetir todo más abajo. */
+  const detCm = !base ? "sin entregas en el período"
+    : `${vendidos.length} de ${base} entregas · ${faltanCm?`faltan ${faltanCm} para la meta de 30%`:"meta de 30% alcanzada 👏"}`;
+  const detAc = !base ? "sin entregas en el período"
+    : `${conAcc} de ${base} entregas salieron con accesorios`;
+  const detPlata = vendidos.length
+    ? `${vendidos.length} contrato${vendidos.length>1?"s":""} · ticket promedio ${pesos(ticket)}`
+    : "sin contratos en el período";
+  const detAccPlata = objAcc
+    ? `${cumplAcc}% del objetivo de ${mill(objAcc)}${faltanAcc?` · faltan ${mill(faltanAcc)}`:" · alcanzado 👏"}`
+    : `${orMes.length} OR facturadas · objetivo sin cargar`;
+
   return `
   <div class="kpis">
-    ${kpi("%","Tasa de contratos",tCm+"%",`${vendidos.length} de ${base} entregas · meta 30%`,Math.round(tCm/30*100),colCm,
-          hayA?vs(tCm,tCmA,true):"")}
-    ${kpi("$","Facturado en contratos",pesos(plata),vendidos.length?`ticket promedio ${pesos(ticket)}`:"sin contratos en el período",null,null,
-          hayA?vs(plata,plataA,false):"")}
-    ${kpi("✦","Accesorios",mill(accM),objAcc?`${cumplAcc}% del objetivo de ${mill(objAcc)}`:`${orMes.length} OR · objetivo sin cargar`,objAcc?cumplAcc:null,colAcc,
-          hayA?vs(accM,accA,false):"")}
-
-  </div>
-
-  <div class="par" style="margin-bottom:14px">
-    <div class="card">
-      <h2>Contratos de ${rotulo()} <span>meta 30%</span></h2>
-      <div class="meta">${aro(tCm,colCm)}
-        <div><div class="n" style="color:${colCm}">${tCm}%</div>
-          <div class="t">${vendidos.length} vendidos sobre ${base} entregas</div>
-          <div class="f" style="color:${faltanCm?"var(--bad)":"var(--ok)"}">${faltanCm?`Te faltan ${faltanCm} contratos para la meta`:"Meta alcanzada 👏"}</div></div>
-      </div>
-      <div class="fila"><span>Facturado<small>ticket promedio ${pesos(ticket)}</small></span><b>${pesos(plata)}</b><span></span></div>
-    </div>
-
-    <div class="card">
-      <h2>Accesorios de ${rotulo()} <span>objetivo ${objAcc?mill(objAcc):"sin cargar"}</span></h2>
-      <div class="meta">${aro(cumplAcc,colAcc)}
-        <div><div class="n" style="color:${colAcc}">${cumplAcc}%</div>
-          <div class="t">${mill(accM)} facturados en ${orMes.length} OR</div>
-          <div class="f" style="color:${faltanAcc?"var(--bad)":"var(--ok)"}">${faltanAcc?`Te faltan ${mill(faltanAcc)}`:"Objetivo alcanzado 👏"}</div></div>
-      </div>
-    </div>
+    ${kpi("%","Tasa de contratos",tCm+"%",detCm,base?Math.round(tCm/30*100):0,colCm,
+          hayA?vs(tCm,tCmA,true):"",TONO_CM)}
+    ${kpi("✦","Tasa de accesorios",tAc+"%",detAc,base?tAc:0,TONO_AC,
+          hayA?vs(tAc,tAcA,true):"",TONO_AC)}
+    ${kpi("$","Facturado en contratos",pesos(plata),detPlata,null,null,
+          hayA?vs(plata,plataA,false):"",TONO_CM)}
+    ${kpi("$","Facturado en accesorios",mill(accM),detAccPlata,objAcc?cumplAcc:null,objAcc?colAcc:null,
+          hayA?vs(accM,accA,false):"",TONO_AC)}
   </div>
 
   ${MODO==="anio"?"":`
   <div class="card" style="border-left:4px solid var(--acc)">
-    <h2>Cómo cerraría el mes <span>${R.restan>0?`quedan ${R.restan} días`:"mes cerrado"}</span></h2>
+    <h2>Cómo cerraría el mes <span>${R.restan>1?`quedan ${R.restan} días`:R.restan===1?"queda 1 día":"mes cerrado"}</span></h2>
     <p style="font-size:13px;color:var(--ink2);margin-bottom:8px">Si el resto del mes sigue al ritmo de estos ${R.hoyDia} días.</p>
     <div class="fila"><span>Contratos proyectados<small>sobre ~${pBase} entregas · tasa ${pTasa}%</small></span><b style="color:${colP}">${pCm}</b><span></span></div>
     <div class="fila"><span>Accesorios proyectados<small>objetivo ${objAcc?mill(objAcc):"sin cargar"}</small></span><b style="color:${colPA}">${mill(pAcc)}</b><span></span></div>
@@ -701,7 +750,9 @@ function vHoy(){
 
   ${MODO==="anio"?"":racha()}
 
-  <div class="card"><h2>Cómo venís en el año <span>entregas y contratos de la hoja ENTR. · tocá la leyenda para prender o apagar cada línea</span></h2>${grafCombinado()}</div>`;
+  <div class="card"><h2>Cómo venís en el año <span>barras: entregas · líneas: azul contratos, verde accesorios</span></h2>${grafCombinado()}</div>
+
+  <div class="card"><h2>Calendario de entregas ${ANIO} <span>un cuadrito por día · más oscuro, más entregas</span></h2>${calendario()}</div>`;
 }
 
 function tabla(arr){
